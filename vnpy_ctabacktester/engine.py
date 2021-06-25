@@ -1,10 +1,10 @@
-import os
 import importlib
 import traceback
 from datetime import datetime
 from threading import Thread
 from pathlib import Path
 from inspect import getfile
+from glob import glob
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -81,7 +81,7 @@ class BacktesterEngine(BaseEngine):
         Load strategy class from source code.
         """
         app_path = Path(__file__).parent.parent
-        path1 = app_path.joinpath("cta_strategy", "strategies")
+        path1 = app_path.joinpath("vnpy_ctastrategy", "strategies")
         self.load_strategy_class_from_folder(path1, "vnpy_ctastrategy.strategies")
 
         path2 = Path.cwd().joinpath("strategies")
@@ -91,18 +91,12 @@ class BacktesterEngine(BaseEngine):
         """
         Load strategy class from certain folder.
         """
-        for dirpath, dirnames, filenames in os.walk(path):
-            for filename in filenames:
-                # Load python source code file
-                if filename.endswith(".py"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.replace(".py", "")])
-                    self.load_strategy_class_from_module(strategy_module_name)
-                # Load compiled pyd binary file
-                elif filename.endswith(".pyd"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.split(".")[0]])
-                    self.load_strategy_class_from_module(strategy_module_name)
+        for suffix in ["py", "pyd", "so"]:
+            pathname: str = str(path) + f"\\*.{suffix}"
+            for filepath in glob(pathname):
+                filename: str = Path(filepath).stem
+                name: str = f"{module_name}.{filename}"
+                self.load_strategy_class_from_module(name)
 
     def load_strategy_class_from_module(self, module_name: str):
         """
@@ -110,6 +104,8 @@ class BacktesterEngine(BaseEngine):
         """
         try:
             module = importlib.import_module(module_name)
+
+            # 重载模块，确保如果策略文件中有任何修改，能够立即生效。
             importlib.reload(module)
 
             for name in dir(module):
