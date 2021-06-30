@@ -5,6 +5,7 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
+from os.path import os
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -92,7 +93,7 @@ class BacktesterEngine(BaseEngine):
         Load strategy class from certain folder.
         """
         for suffix in ["py", "pyd", "so"]:
-            pathname: str = str(path) + f"\\*.{suffix}"
+            pathname: str = os.path.join(str(path), f"*.{suffix}")
             for filepath in glob(pathname):
                 filename: str = Path(filepath).stem
                 name: str = f"{module_name}.{filename}"
