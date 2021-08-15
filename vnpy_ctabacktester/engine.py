@@ -5,6 +5,7 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
+from os.path import os
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
