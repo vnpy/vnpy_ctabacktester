@@ -5,15 +5,14 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
-from os.path import os
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.constant import Interval
 from vnpy.trader.utility import extract_vt_symbol
 from vnpy.trader.object import HistoryRequest
-from vnpy.trader.rqdata import rqdata_client
-from vnpy.trader.database import database_manager
+from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
+from vnpy.trader.database import BaseDatabase, get_database
 
 from vnpy_ctastrategy import CtaTemplate
 from vnpy_ctastrategy.backtesting import (
@@ -43,6 +42,9 @@ class BacktesterEngine(BaseEngine):
         self.backtesting_engine = None
         self.thread = None
 
+        self.datafeed: BaseDatafeed = get_datafeed()
+        self.database: BaseDatabase = get_database()
+
         # Backtesting reuslt
         self.result_df = None
         self.result_statistics = None
@@ -61,15 +63,15 @@ class BacktesterEngine(BaseEngine):
         self.load_strategy_class()
         self.write_log("策略文件加载完成")
 
-        self.init_rqdata()
+        self.init_datafeed()
 
-    def init_rqdata(self):
+    def init_datafeed(self):
         """
-        Init RQData client.
+        Init datafeed client.
         """
-        result = rqdata_client.init()
+        result = self.datafeed.init()
         if result:
-            self.write_log("RQData数据接口初始化成功")
+            self.write_log("数据服务初始化成功")
 
     def write_log(self, msg: str):
         """"""
@@ -399,10 +401,10 @@ class BacktesterEngine(BaseEngine):
                 )
             # Otherwise use RQData to query data
             else:
-                data = rqdata_client.query_history(req)
+                data = self.datafeed.query_history(req)
 
             if data:
-                database_manager.save_bar_data(data)
+                self.database.save_bar_data(data)
                 self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
             else:
                 self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
