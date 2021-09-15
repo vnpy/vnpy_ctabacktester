@@ -401,7 +401,7 @@ class BacktesterEngine(BaseEngine):
                 )
             # Otherwise use RQData to query data
             else:
-                data = self.datafeed.query_history(req)
+                data = self.datafeed.query_bar_history(req)
 
             if data:
                 self.database.save_bar_data(data)
