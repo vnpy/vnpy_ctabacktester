@@ -23,9 +23,16 @@
 
 from pathlib import Path
 
+import importlib_metadata
 from vnpy.trader.app import BaseApp
 
 from .engine import BacktesterEngine, APP_NAME
+
+
+try:
+    __version__ = importlib_metadata.version("vnpy_ctabacktester")
+except importlib_metadata.PackageNotFoundError:
+    __version__ = "dev"
 
 
 class CtaBacktesterApp(BaseApp):
