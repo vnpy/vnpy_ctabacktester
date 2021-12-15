@@ -245,6 +245,11 @@ class BacktesterManager(QtWidgets.QWidget):
             start_dt = QtCore.QDate.fromString(start_str, "yyyy-MM-dd")
             self.start_date_edit.setDate(start_dt)
 
+        end_str = setting.get("end", "")
+        if end_str:
+            end_dt = QtCore.QDate.fromString(end_str, "yyyy-MM-dd")
+            self.end_date_edit.setDate(end_dt)
+
         self.rate_line.setText(str(setting["rate"]))
         self.slippage_line.setText(str(setting["slippage"]))
         self.size_line.setText(str(setting["size"]))
@@ -336,7 +341,8 @@ class BacktesterManager(QtWidgets.QWidget):
             "class_name": class_name,
             "vt_symbol": vt_symbol,
             "interval": interval,
-            "start": start.isoformat(),
+            "start": start.strftime('%Y-%m-%d'),
+            "end": end.strftime('%Y-%m-%d'),
             "rate": rate,
             "slippage": slippage,
             "size": size,
