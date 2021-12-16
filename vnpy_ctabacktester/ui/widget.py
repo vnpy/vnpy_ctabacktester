@@ -2,7 +2,9 @@ import csv
 from datetime import datetime, timedelta
 from copy import copy
 
+import ast
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 
 from vnpy.trader.constant import Interval, Direction, Exchange
@@ -1032,15 +1034,11 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         if not path:
             return
 
-        with open(path, "w") as f:
-            writer = csv.writer(f, lineterminator="\n")
-
-            writer.writerow(["参数", self.target_display])
-
-            for tp in self.result_values:
-                setting, target_value, _ = tp
-                row_data = [str(setting), str(target_value)]
-                writer.writerow(row_data)
+        result_values = np.array(self.result_values)
+        setting = pd.DataFrame([ast.literal_eval(x) for x in result_values[:, 0]])
+        results = pd.DataFrame(result_values[:, 2].tolist())
+        out_data = pd.concat([setting, results], axis=1)
+        out_data.to_csv(path, index=None, encoding='gbk')
 
 
 class BacktestingTradeMonitor(BaseMonitor):
