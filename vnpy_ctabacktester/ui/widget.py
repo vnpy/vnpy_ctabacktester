@@ -336,7 +336,7 @@ class BacktesterManager(QtWidgets.QWidget):
             "class_name": class_name,
             "vt_symbol": vt_symbol,
             "interval": interval,
-            "start": start.isoformat(),
+            "start": start.strftime("%Y-%m-%d"),
             "rate": rate,
             "slippage": slippage,
             "size": size,
