@@ -1,4 +1,5 @@
 import csv
+import subprocess
 from datetime import datetime, timedelta
 from copy import copy
 
@@ -9,7 +10,6 @@ from vnpy.trader.constant import Interval, Direction, Exchange
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import QtCore, QtWidgets, QtGui
 from vnpy.trader.ui.widget import BaseMonitor, BaseCell, DirectionCell, EnumCell
-from vnpy.trader.ui.editor import CodeEditor
 from vnpy.event import Event, EventEngine
 from vnpy.chart import ChartWidget, CandleItem, VolumeItem
 from vnpy.trader.utility import load_json, save_json
@@ -221,9 +221,6 @@ class BacktesterManager(QtWidgets.QWidget):
         hbox.addWidget(self.chart)
         self.setLayout(hbox)
 
-        # Code Editor
-        self.editor = CodeEditor(self.main_engine, self.event_engine)
-
     def load_backtesting_setting(self):
         """"""
         setting = load_json(self.setting_filename)
@@ -336,7 +333,7 @@ class BacktesterManager(QtWidgets.QWidget):
             "class_name": class_name,
             "vt_symbol": vt_symbol,
             "interval": interval,
-            "start": start.isoformat(),
+            "start": start.strftime("%Y-%m-%d"),
             "rate": rate,
             "slippage": slippage,
             "size": size,
@@ -509,10 +506,19 @@ class BacktesterManager(QtWidgets.QWidget):
     def edit_strategy_code(self):
         """"""
         class_name = self.class_combo.currentText()
-        file_path = self.backtester_engine.get_strategy_class_file(class_name)
+        if not class_name:
+            return
 
-        self.editor.open_editor(file_path)
-        self.editor.show()
+        file_path = self.backtester_engine.get_strategy_class_file(class_name)
+        cmd = ["code", file_path]
+
+        p: subprocess.CompletedProcess = subprocess.run(cmd, shell=True)
+        if p.returncode:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "启动代码编辑器失败",
+                "请检查是否安装了Visual Studio Code，并将其路径添加到了系统全局变量中！"
+            )
 
     def reload_strategy_class(self):
         """"""
