@@ -5,8 +5,7 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
-import sys
-import os
+import vnpy_ctastrategy
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -85,7 +84,7 @@ class BacktesterEngine(BaseEngine):
         """
         Load strategy class from source code.
         """
-        app_path = Path(os.path.realpath(sys.modules["vnpy_ctastrategy"].__file__)).parent
+        app_path = Path(vnpy_ctastrategy.__file__).parent
         path1 = app_path.joinpath("strategies")
         self.load_strategy_class_from_folder(path1, "vnpy_ctastrategy.strategies")
 
