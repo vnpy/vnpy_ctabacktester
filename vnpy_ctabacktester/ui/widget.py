@@ -183,10 +183,10 @@ class BacktesterManager(QtWidgets.QWidget):
         self.statistics_monitor = StatisticsMonitor()
 
         self.log_monitor = QtWidgets.QTextEdit()
-        self.log_monitor.setMaximumHeight(400)
 
         self.chart = BacktesterChart()
-        self.chart.setMinimumWidth(1000)
+        chart = QtWidgets.QVBoxLayout()
+        chart.addWidget(self.chart)
 
         self.trade_dialog = BacktestingResultDialog(
             self.main_engine,
@@ -216,9 +216,23 @@ class BacktesterManager(QtWidgets.QWidget):
         vbox.addWidget(self.log_monitor)
 
         hbox = QtWidgets.QHBoxLayout()
-        hbox.addLayout(left_vbox)
-        hbox.addLayout(vbox)
-        hbox.addWidget(self.chart)
+
+        left_box = QtWidgets.QWidget()
+        left_box.setLayout(left_vbox)
+        left_box.setMinimumWidth(200)
+        left_box.setMaximumWidth(300)
+        hbox.addWidget(left_box)
+
+        v_box = QtWidgets.QWidget()
+        v_box.setLayout(vbox)
+        v_box.setMinimumWidth(200)
+        v_box.setMaximumWidth(300)
+        hbox.addWidget(v_box)
+
+        right_chart = QtWidgets.QWidget()
+        right_chart.setLayout(chart)
+        right_chart.setMinimumWidth(600)
+        hbox.addWidget(right_chart)
         self.setLayout(hbox)
 
     def load_backtesting_setting(self):
