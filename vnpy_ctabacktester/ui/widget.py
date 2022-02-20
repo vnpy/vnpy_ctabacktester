@@ -29,9 +29,9 @@ class BacktesterManager(QtWidgets.QWidget):
 
     setting_filename = "cta_backtester_setting.json"
 
-    signal_log = QtCore.pyqtSignal(Event)
-    signal_backtesting_finished = QtCore.pyqtSignal(Event)
-    signal_optimization_finished = QtCore.pyqtSignal(Event)
+    signal_log = QtCore.Signal(Event)
+    signal_backtesting_finished = QtCore.Signal(Event)
+    signal_optimization_finished = QtCore.Signal(Event)
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
@@ -315,6 +315,10 @@ class BacktesterManager(QtWidgets.QWidget):
     def start_backtesting(self):
         """"""
         class_name = self.class_combo.currentText()
+        if not class_name:
+            self.write_log("请选择要回测的策略")
+            return
+
         vt_symbol = self.symbol_line.text()
         interval = self.interval_combo.currentText()
         start = self.start_date_edit.dateTime().toPython()
