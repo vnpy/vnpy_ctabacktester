@@ -147,18 +147,29 @@ class BacktesterManager(QtWidgets.QWidget):
         ]:
             button.setFixedHeight(button.sizeHint().height() * 2)
 
-        form = QtWidgets.QFormLayout()
-        form.addRow("交易策略", self.class_combo)
-        form.addRow("本地代码", self.symbol_line)
-        form.addRow("K线周期", self.interval_combo)
-        form.addRow("开始日期", self.start_date_edit)
-        form.addRow("结束日期", self.end_date_edit)
-        form.addRow("手续费率", self.rate_line)
-        form.addRow("交易滑点", self.slippage_line)
-        form.addRow("合约乘数", self.size_line)
-        form.addRow("价格跳动", self.pricetick_line)
-        form.addRow("回测资金", self.capital_line)
-        form.addRow("合约模式", self.inverse_combo)
+        form = QtWidgets.QGridLayout()
+        form.addWidget(QtWidgets.QLabel("交易策略"), 0, 0)
+        form.addWidget(QtWidgets.QLabel("本地代码"), 1, 0)
+        form.addWidget(QtWidgets.QLabel("K线周期"), 2, 0)
+        form.addWidget(QtWidgets.QLabel("开始日期"), 3, 0)
+        form.addWidget(QtWidgets.QLabel("结束日期"), 4, 0)
+        form.addWidget(QtWidgets.QLabel("手续费率"), 5, 0)
+        form.addWidget(QtWidgets.QLabel("交易滑点"), 6, 0)
+        form.addWidget(QtWidgets.QLabel("合约乘数"), 7, 0)
+        form.addWidget(QtWidgets.QLabel("价格跳动"), 8, 0)
+        form.addWidget(QtWidgets.QLabel("回测资金"), 9, 0)
+        form.addWidget(QtWidgets.QLabel("合约模式"), 10, 0)
+        form.addWidget(self.class_combo, 0, 1)
+        form.addWidget(self.symbol_line, 1, 1)
+        form.addWidget(self.interval_combo, 2, 1)
+        form.addWidget(self.start_date_edit, 3, 1)
+        form.addWidget(self.end_date_edit, 4, 1)
+        form.addWidget(self.rate_line, 5, 1)
+        form.addWidget(self.slippage_line, 6, 1)
+        form.addWidget(self.size_line, 7, 1)
+        form.addWidget(self.pricetick_line, 8, 1)
+        form.addWidget(self.capital_line, 9, 1)
+        form.addWidget(self.inverse_combo, 10, 1)
 
         result_grid = QtWidgets.QGridLayout()
         result_grid.addWidget(self.trade_button, 0, 0)
@@ -183,10 +194,10 @@ class BacktesterManager(QtWidgets.QWidget):
         self.statistics_monitor = StatisticsMonitor()
 
         self.log_monitor = QtWidgets.QTextEdit()
-        self.log_monitor.setMaximumHeight(400)
 
         self.chart = BacktesterChart()
-        self.chart.setMinimumWidth(1000)
+        chart = QtWidgets.QVBoxLayout()
+        chart.addWidget(self.chart)
 
         self.trade_dialog = BacktestingResultDialog(
             self.main_engine,
@@ -216,9 +227,23 @@ class BacktesterManager(QtWidgets.QWidget):
         vbox.addWidget(self.log_monitor)
 
         hbox = QtWidgets.QHBoxLayout()
-        hbox.addLayout(left_vbox)
-        hbox.addLayout(vbox)
-        hbox.addWidget(self.chart)
+
+        left_box = QtWidgets.QWidget()
+        left_box.setLayout(left_vbox)
+        left_box.setMinimumWidth(200)
+        left_box.setMaximumWidth(300)
+        hbox.addWidget(left_box)
+
+        v_box = QtWidgets.QWidget()
+        v_box.setLayout(vbox)
+        v_box.setMinimumWidth(200)
+        v_box.setMaximumWidth(300)
+        hbox.addWidget(v_box)
+
+        right_chart = QtWidgets.QWidget()
+        right_chart.setLayout(chart)
+        right_chart.setMinimumWidth(600)
+        hbox.addWidget(right_chart)
         self.setLayout(hbox)
 
     def load_backtesting_setting(self):
