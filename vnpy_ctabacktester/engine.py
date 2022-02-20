@@ -5,7 +5,6 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
-import vnpy_ctastrategy
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -15,6 +14,7 @@ from vnpy.trader.object import HistoryRequest
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.database import BaseDatabase, get_database
 
+import vnpy_ctastrategy
 from vnpy_ctastrategy import CtaTemplate
 from vnpy_ctastrategy.backtesting import (
     BacktestingEngine,
@@ -373,7 +373,7 @@ class BacktesterEngine(BaseEngine):
         end: datetime
     ):
         """
-        Query bar data from RQData.
+        执行下载任务
         """
         self.write_log(f"{vt_symbol}-{interval}开始下载历史数据")
 
@@ -387,17 +387,17 @@ class BacktesterEngine(BaseEngine):
         req = HistoryRequest(
             symbol=symbol,
             exchange=exchange,
+            interval=Interval(interval),
             start=start,
             end=end
         )
-
-        contract = self.main_engine.get_contract(vt_symbol)
 
         try:
             if interval == "tick":
                 data = self.datafeed.query_tick_history(req)
             else:
-                req.interval = Interval(interval)
+                contract = self.main_engine.get_contract(vt_symbol)
+
                 # If history data provided in gateway, then query
                 if contract and contract.history_data:
                     data = self.main_engine.query_history(
@@ -412,6 +412,7 @@ class BacktesterEngine(BaseEngine):
                     self.database.save_tick_data(data)
                 else:
                     self.database.save_bar_data(data)
+
                 self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
             else:
                 self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")

@@ -221,7 +221,7 @@ class BacktesterManager(QtWidgets.QWidget):
 
         left_widget = QtWidgets.QWidget()
         left_widget.setLayout(left_hbox)
-        
+
         right_vbox = QtWidgets.QHBoxLayout()
         right_vbox.addWidget(self.chart)
 
