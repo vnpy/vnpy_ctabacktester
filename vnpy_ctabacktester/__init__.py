@@ -44,4 +44,4 @@ class CtaBacktesterApp(BaseApp):
     display_name = "CTA回测"
     engine_class = BacktesterEngine
     widget_name = "BacktesterManager"
-    icon_name = "backtester.ico"
+    icon_name = str(app_path.joinpath("ui", "backtester.ico"))
