@@ -5,6 +5,7 @@ from threading import Thread
 from pathlib import Path
 from inspect import getfile
 from glob import glob
+import vnpy_ctastrategy
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -83,8 +84,8 @@ class BacktesterEngine(BaseEngine):
         """
         Load strategy class from source code.
         """
-        app_path = Path(__file__).parent.parent
-        path1 = app_path.joinpath("vnpy_ctastrategy", "strategies")
+        app_path = Path(vnpy_ctastrategy.__file__).parent
+        path1 = app_path.joinpath("strategies")
         self.load_strategy_class_from_folder(path1, "vnpy_ctastrategy.strategies")
 
         path2 = Path.cwd().joinpath("strategies")
@@ -386,7 +387,6 @@ class BacktesterEngine(BaseEngine):
         req = HistoryRequest(
             symbol=symbol,
             exchange=exchange,
-            interval=Interval(interval),
             start=start,
             end=end
         )
@@ -394,17 +394,24 @@ class BacktesterEngine(BaseEngine):
         contract = self.main_engine.get_contract(vt_symbol)
 
         try:
-            # If history data provided in gateway, then query
-            if contract and contract.history_data:
-                data = self.main_engine.query_history(
-                    req, contract.gateway_name
-                )
-            # Otherwise use RQData to query data
+            if interval == "tick":
+                data = self.datafeed.query_tick_history(req)
             else:
-                data = self.datafeed.query_bar_history(req)
+                req.interval = Interval(interval)
+                # If history data provided in gateway, then query
+                if contract and contract.history_data:
+                    data = self.main_engine.query_history(
+                        req, contract.gateway_name
+                    )
+                # Otherwise use RQData to query data
+                else:
+                    data = self.datafeed.query_bar_history(req)
 
             if data:
-                self.database.save_bar_data(data)
+                if interval == "tick":
+                    self.database.save_tick_data(data)
+                else:
+                    self.database.save_bar_data(data)
                 self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
             else:
                 self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
