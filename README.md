@@ -22,7 +22,7 @@
 直接使用pip命令：
 
 ```
-pip install vnpy_ctastrategy
+pip install vnpy_ctabacktester
 ```
 
 
