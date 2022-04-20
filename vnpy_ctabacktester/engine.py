@@ -8,6 +8,7 @@ from inspect import getfile
 from glob import glob
 from types import ModuleType
 from pandas import DataFrame
+from typing import Optional
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -399,7 +400,7 @@ class BacktesterEngine(BaseEngine):
             if interval == "tick":
                 data: List[TickData] = self.datafeed.query_tick_history(req)
             else:
-                contract: ContractData = self.main_engine.get_contract(vt_symbol)
+                contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
 
                 # If history data provided in gateway, then query
                 if contract and contract.history_data:
