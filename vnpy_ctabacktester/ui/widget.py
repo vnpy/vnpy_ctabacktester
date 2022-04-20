@@ -2,6 +2,7 @@ import csv
 import subprocess
 from datetime import datetime, timedelta
 from copy import copy
+from typing import List
 
 import numpy as np
 import pyqtgraph as pg
@@ -14,8 +15,9 @@ from vnpy.trader.ui.widget import BaseMonitor, BaseCell, DirectionCell, EnumCell
 from vnpy.event import Event, EventEngine
 from vnpy.chart import ChartWidget, CandleItem, VolumeItem
 from vnpy.trader.utility import load_json, save_json
-from vnpy.trader.object import BarData, TradeData
+from vnpy.trader.object import BarData, TradeData, OrderData
 from vnpy.trader.database import DB_TZ
+from vnpy_ctastrategy.backtesting import DailyResult
 
 from ..engine import (
     APP_NAME,
@@ -323,8 +325,8 @@ class BacktesterManager(QtWidgets.QWidget):
 
         vt_symbol: str = self.symbol_line.text()
         interval: str = self.interval_combo.currentText()
-        start: object = self.start_date_edit.dateTime().toPython()
-        end: object = self.end_date_edit.dateTime().toPython()
+        start: datetime = self.start_date_edit.dateTime().toPython()
+        end: datetime = self.end_date_edit.dateTime().toPython()
         rate: float = float(self.rate_line.text())
         slippage: float = float(self.slippage_line.text())
         size: float = float(self.size_line.text())
@@ -489,7 +491,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_backtesting_trades(self) -> None:
         """"""
         if not self.trade_dialog.is_updated():
-            trades: list = self.backtester_engine.get_all_trades()
+            trades: List[TradeData] = self.backtester_engine.get_all_trades()
             self.trade_dialog.update_data(trades)
 
         self.trade_dialog.exec_()
@@ -497,7 +499,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_backtesting_orders(self) -> None:
         """"""
         if not self.order_dialog.is_updated():
-            orders: list = self.backtester_engine.get_all_orders()
+            orders: List[OrderData] = self.backtester_engine.get_all_orders()
             self.order_dialog.update_data(orders)
 
         self.order_dialog.exec_()
@@ -505,7 +507,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_daily_results(self) -> None:
         """"""
         if not self.daily_dialog.is_updated():
-            results: list = self.backtester_engine.get_all_daily_results()
+            results: List[DailyResult] = self.backtester_engine.get_all_daily_results()
             self.daily_dialog.update_data(results)
 
         self.daily_dialog.exec_()
@@ -516,7 +518,7 @@ class BacktesterManager(QtWidgets.QWidget):
             history: list = self.backtester_engine.get_history_data()
             self.candle_dialog.update_history(history)
 
-            trades: list = self.backtester_engine.get_all_trades()
+            trades: List[TradeData] = self.backtester_engine.get_all_trades()
             self.candle_dialog.update_trades(trades)
 
         self.candle_dialog.exec_()
@@ -1349,7 +1351,7 @@ class CandleChartDialog(QtWidgets.QDialog):
                 open_y: float = open_bar.high_price
                 close_y: float = close_bar.low_price
 
-            pen: QtGui.QPen = pg.mkPen(QtGui.QColor(scatter_color))
+            pen = pg.mkPen(QtGui.QColor(scatter_color))
             brush: QtGui.QBrush = pg.mkBrush(QtGui.QColor(scatter_color))
             size: int = 10
 

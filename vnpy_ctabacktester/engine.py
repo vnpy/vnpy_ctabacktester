@@ -26,11 +26,11 @@ from vnpy_ctastrategy.backtesting import (
 )
 
 
-APP_NAME: str = "CtaBacktester"
+APP_NAME = "CtaBacktester"
 
-EVENT_BACKTESTER_LOG: str = "eBacktesterLog"
-EVENT_BACKTESTER_BACKTESTING_FINISHED: str = "eBacktesterBacktestingFinished"
-EVENT_BACKTESTER_OPTIMIZATION_FINISHED: str = "eBacktesterOptimizationFinished"
+EVENT_BACKTESTER_LOG = "eBacktesterLog"
+EVENT_BACKTESTER_BACKTESTING_FINISHED = "eBacktesterBacktestingFinished"
+EVENT_BACKTESTER_OPTIMIZATION_FINISHED = "eBacktesterOptimizationFinished"
 
 
 class BacktesterEngine(BaseEngine):
