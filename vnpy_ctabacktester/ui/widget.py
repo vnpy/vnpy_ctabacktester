@@ -59,6 +59,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def init_strategy_settings(self) -> None:
         """"""
         self.class_names = self.backtester_engine.get_strategy_class_names()
+        self.class_names.sort()
 
         for class_name in self.class_names:
             setting: dict = self.backtester_engine.get_default_setting(class_name)
