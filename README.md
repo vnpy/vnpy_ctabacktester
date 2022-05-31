@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    <img src ="https://img.shields.io/badge/version-1.0.5-blueviolet.svg"/>
+    <img src ="https://img.shields.io/badge/version-1.0.6-blueviolet.svg"/>
     <img src ="https://img.shields.io/badge/platform-windows|linux|macos-yellow.svg"/>
     <img src ="https://img.shields.io/badge/python-3.7|3.8|3.9|3.10-blue.svg" />
     <img src ="https://img.shields.io/github/license/vnpy/vnpy.svg?color=orange"/>
@@ -13,7 +13,7 @@
 
 ## 说明
 
-采用PyQt开发的图形化CTA策略回测模块，基于用户友好的图形界面实现简洁易用的数据下载、历史回测和参数优化等投研功能。
+图形化CTA策略回测模块，基于用户友好的图形界面实现简洁易用的数据下载、历史回测和参数优化等投研功能。
 
 ## 安装
 
