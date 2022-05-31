@@ -145,7 +145,6 @@ class BacktesterEngine(BaseEngine):
         size: int,
         pricetick: float,
         capital: int,
-        inverse: bool,
         setting: dict
     ) -> None:
         """"""
@@ -170,7 +169,6 @@ class BacktesterEngine(BaseEngine):
             size=size,
             pricetick=pricetick,
             capital=capital,
-            inverse=inverse,
             mode=mode
         )
 
@@ -213,7 +211,6 @@ class BacktesterEngine(BaseEngine):
         size: int,
         pricetick: float,
         capital: int,
-        inverse: bool,
         setting: dict
     ) -> bool:
         if self.thread:
@@ -234,7 +231,6 @@ class BacktesterEngine(BaseEngine):
                 size,
                 pricetick,
                 capital,
-                inverse,
                 setting
             )
         )
@@ -271,7 +267,6 @@ class BacktesterEngine(BaseEngine):
         size: int,
         pricetick: float,
         capital: int,
-        inverse: bool,
         optimization_setting: OptimizationSetting,
         use_ga: bool
     ) -> None:
@@ -296,7 +291,6 @@ class BacktesterEngine(BaseEngine):
             size=size,
             pricetick=pricetick,
             capital=capital,
-            inverse=inverse,
             mode=mode
         )
 
@@ -337,7 +331,6 @@ class BacktesterEngine(BaseEngine):
         size: int,
         pricetick: float,
         capital: int,
-        inverse: bool,
         optimization_setting: OptimizationSetting,
         use_ga: bool
     ) -> bool:
@@ -359,7 +352,6 @@ class BacktesterEngine(BaseEngine):
                 size,
                 pricetick,
                 capital,
-                inverse,
                 optimization_setting,
                 use_ga
             )

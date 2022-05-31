@@ -100,9 +100,6 @@ class BacktesterManager(QtWidgets.QWidget):
         self.pricetick_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit("0.2")
         self.capital_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit("1000000")
 
-        self.inverse_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
-        self.inverse_combo.addItems(["正向", "反向"])
-
         backtesting_button: QtWidgets.QPushButton = QtWidgets.QPushButton("开始回测")
         backtesting_button.clicked.connect(self.start_backtesting)
 
@@ -163,7 +160,6 @@ class BacktesterManager(QtWidgets.QWidget):
         form.addRow("合约乘数", self.size_line)
         form.addRow("价格跳动", self.pricetick_line)
         form.addRow("回测资金", self.capital_line)
-        form.addRow("合约模式", self.inverse_combo)
 
         result_grid: QtWidgets.QGridLayout = QtWidgets.QGridLayout()
         result_grid.addWidget(self.trade_button, 0, 0)
@@ -265,11 +261,6 @@ class BacktesterManager(QtWidgets.QWidget):
         self.pricetick_line.setText(str(setting["pricetick"]))
         self.capital_line.setText(str(setting["capital"]))
 
-        if not setting["inverse"]:
-            self.inverse_combo.setCurrentIndex(0)
-        else:
-            self.inverse_combo.setCurrentIndex(1)
-
     def register_event(self) -> None:
         """"""
         self.signal_log.connect(self.process_log_event)
@@ -334,11 +325,6 @@ class BacktesterManager(QtWidgets.QWidget):
         pricetick: float = float(self.pricetick_line.text())
         capital: float = float(self.capital_line.text())
 
-        if self.inverse_combo.currentText() == "正向":
-            inverse: bool = False
-        else:
-            inverse: bool = True
-
         # Check validity of vt_symbol
         if "." not in vt_symbol:
             self.write_log("本地代码缺失交易所后缀，请检查")
@@ -359,8 +345,7 @@ class BacktesterManager(QtWidgets.QWidget):
             "slippage": slippage,
             "size": size,
             "pricetick": pricetick,
-            "capital": capital,
-            "inverse": inverse,
+            "capital": capital
         }
         save_json(self.setting_filename, backtesting_setting)
 
@@ -385,7 +370,6 @@ class BacktesterManager(QtWidgets.QWidget):
             size,
             pricetick,
             capital,
-            inverse,
             new_setting
         )
 
@@ -416,11 +400,6 @@ class BacktesterManager(QtWidgets.QWidget):
         pricetick: float = float(self.pricetick_line.text())
         capital: float = float(self.capital_line.text())
 
-        if self.inverse_combo.currentText() == "正向":
-            inverse: bool = False
-        else:
-            inverse: bool = True
-
         parameters: dict = self.settings[class_name]
         dialog: OptimizationSettingEditor = OptimizationSettingEditor(class_name, parameters)
         i: int = dialog.exec()
@@ -441,7 +420,6 @@ class BacktesterManager(QtWidgets.QWidget):
             size,
             pricetick,
             capital,
-            inverse,
             optimization_setting,
             use_ga
         )
