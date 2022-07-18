@@ -438,7 +438,7 @@ class BacktesterManager(QtWidgets.QWidget):
             start_date.month(),
             start_date.day(),
         )
-        start: datetime = DB_TZ.localize(start)
+        start: datetime = start.replace(tzinfo=DB_TZ)
 
         end: datetime = datetime(
             end_date.year(),
@@ -448,7 +448,7 @@ class BacktesterManager(QtWidgets.QWidget):
             59,
             59,
         )
-        end: datetime = DB_TZ.localize(end)
+        end: datetime = end.replace(tzinfo=DB_TZ)
 
         self.backtester_engine.start_downloading(
             vt_symbol,
