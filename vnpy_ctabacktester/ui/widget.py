@@ -706,7 +706,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         return setting
 
 
-class BacktesterChart(pg.GraphicsWindow):
+class BacktesterChart(pg.GraphicsLayoutWidget):
     """"""
 
     def __init__(self) -> None:

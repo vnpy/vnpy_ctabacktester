@@ -1,3 +1,7 @@
+# 1.0.9版本
+
+1. 使用pyqtgraph的GraphicsLayoutWidget来替代已经废弃的GraphicsWindow
+
 # 1.0.8版本
 
 1. 使用zoneinfo替换pytz库
