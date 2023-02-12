@@ -74,7 +74,7 @@ class BacktesterEngine(BaseEngine):
         """
         Init datafeed client.
         """
-        result: bool = self.datafeed.init()
+        result: bool = self.datafeed.init(self.write_log)
         if result:
             self.write_log("数据服务初始化成功")
 
@@ -390,7 +390,7 @@ class BacktesterEngine(BaseEngine):
 
         try:
             if interval == "tick":
-                data: List[TickData] = self.datafeed.query_tick_history(req)
+                data: List[TickData] = self.datafeed.query_tick_history(req, self.write_log)
             else:
                 contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
 
@@ -401,7 +401,7 @@ class BacktesterEngine(BaseEngine):
                     )
                 # Otherwise use RQData to query data
                 else:
-                    data: List[BarData] = self.datafeed.query_bar_history(req)
+                    data: List[BarData] = self.datafeed.query_bar_history(req, self.write_log)
 
             if data:
                 if interval == "tick":
