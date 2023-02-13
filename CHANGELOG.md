@@ -1,3 +1,8 @@
+# 1.1.0版本
+
+1. 增加调用datafeed功能时的日志输出
+2. 支持优化时的最大进程数量参数设置
+
 # 1.0.9版本
 
 1. 使用pyqtgraph的GraphicsLayoutWidget来替代已经废弃的GraphicsWindow

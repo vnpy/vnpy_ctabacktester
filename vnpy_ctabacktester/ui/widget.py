@@ -2,7 +2,7 @@ import csv
 import subprocess
 from datetime import datetime, timedelta
 from copy import copy
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pyqtgraph as pg
@@ -406,7 +406,7 @@ class BacktesterManager(QtWidgets.QWidget):
         if i != dialog.Accepted:
             return
 
-        optimization_setting, use_ga = dialog.get_setting()
+        optimization_setting, use_ga, max_workers = dialog.get_setting()
         self.target_display: str = dialog.target_display
 
         self.backtester_engine.start_optimization(
@@ -421,7 +421,8 @@ class BacktesterManager(QtWidgets.QWidget):
             pricetick,
             capital,
             optimization_setting,
-            use_ga
+            use_ga,
+            max_workers
         )
 
         self.result_button.setEnabled(False)
@@ -864,19 +865,26 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         self.target_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
         self.target_combo.addItems(list(self.DISPLAY_NAME_MAP.keys()))
 
+        self.worker_spin: QtWidgets.QSpinBox = QtWidgets.QSpinBox()
+        self.worker_spin.setRange(0, 10000)
+        self.worker_spin.setValue(0)
+        self.worker_spin.setToolTip("设为0则自动根据CPU核心数启动对应数量的进程")
+
         grid: QtWidgets.QGridLayout = QtWidgets.QGridLayout()
-        grid.addWidget(QLabel("目标"), 0, 0)
+        grid.addWidget(QLabel("优化目标"), 0, 0)
         grid.addWidget(self.target_combo, 0, 1, 1, 3)
-        grid.addWidget(QLabel("参数"), 1, 0)
-        grid.addWidget(QLabel("开始"), 1, 1)
-        grid.addWidget(QLabel("步进"), 1, 2)
-        grid.addWidget(QLabel("结束"), 1, 3)
+        grid.addWidget(QLabel("进程上限"), 1, 0)
+        grid.addWidget(self.worker_spin, 1, 1, 1, 3)
+        grid.addWidget(QLabel("参数"), 2, 0)
+        grid.addWidget(QLabel("开始"), 2, 1)
+        grid.addWidget(QLabel("步进"), 2, 2)
+        grid.addWidget(QLabel("结束"), 2, 3)
 
         # Add vt_symbol and name edit if add new strategy
         self.setWindowTitle(f"优化参数配置：{self.class_name}")
 
         validator: QtGui.QDoubleValidator = QtGui.QDoubleValidator()
-        row: int = 2
+        row: int = 3
 
         for name, value in self.parameters.items():
             type_ = type(value)
@@ -960,9 +968,9 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
 
         self.accept()
 
-    def get_setting(self) -> None:
+    def get_setting(self) -> Tuple[OptimizationSetting, bool, int]:
         """"""
-        return self.optimization_setting, self.use_ga
+        return self.optimization_setting, self.use_ga, self.worker_spin.value()
 
 
 class OptimizationResultMonitor(QtWidgets.QDialog):

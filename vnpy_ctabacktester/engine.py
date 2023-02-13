@@ -269,7 +269,8 @@ class BacktesterEngine(BaseEngine):
         pricetick: float,
         capital: int,
         optimization_setting: OptimizationSetting,
-        use_ga: bool
+        use_ga: bool,
+        max_workers: int
     ) -> None:
         """"""
         self.result_values = None
@@ -301,15 +302,21 @@ class BacktesterEngine(BaseEngine):
             {}
         )
 
+        # 0则代表不限制
+        if max_workers == 0:
+            max_workers = None
+
         if use_ga:
             self.result_values = engine.run_ga_optimization(
                 optimization_setting,
-                output=False
+                output=False,
+                max_workers=max_workers
             )
         else:
             self.result_values = engine.run_bf_optimization(
                 optimization_setting,
-                output=False
+                output=False,
+                max_workers=max_workers
             )
 
         # Clear thread object handler.
@@ -333,7 +340,8 @@ class BacktesterEngine(BaseEngine):
         pricetick: float,
         capital: int,
         optimization_setting: OptimizationSetting,
-        use_ga: bool
+        use_ga: bool,
+        max_workers: int
     ) -> bool:
         if self.thread:
             self.write_log("已有任务在运行中，请等待完成")
@@ -354,7 +362,8 @@ class BacktesterEngine(BaseEngine):
                 pricetick,
                 capital,
                 optimization_setting,
-                use_ga
+                use_ga,
+                max_workers
             )
         )
         self.thread.start()
