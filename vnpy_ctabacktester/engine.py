@@ -19,7 +19,7 @@ from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.database import BaseDatabase, get_database
 
 import vnpy_ctastrategy
-from vnpy_ctastrategy import CtaTemplate
+from vnpy_ctastrategy import CtaTemplate, TargetPosTemplate
 from vnpy_ctastrategy.backtesting import (
     BacktestingEngine,
     OptimizationSetting,
@@ -118,7 +118,11 @@ class BacktesterEngine(BaseEngine):
 
             for name in dir(module):
                 value = getattr(module, name)
-                if (isinstance(value, type) and issubclass(value, CtaTemplate) and value is not CtaTemplate):
+                if (
+                    isinstance(value, type)
+                    and issubclass(value, CtaTemplate)
+                    and value not in {CtaTemplate, TargetPosTemplate}
+                ):
                     self.classes[value.__name__] = value
         except:  # noqa
             msg: str = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
