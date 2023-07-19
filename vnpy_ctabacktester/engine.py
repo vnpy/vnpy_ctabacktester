@@ -184,6 +184,9 @@ class BacktesterEngine(BaseEngine):
         )
 
         engine.load_data()
+        if not engine.history_data:
+            self.write_log("策略回测失败，历史数据为空")
+            return
 
         try:
             engine.run_backtesting()

@@ -270,10 +270,8 @@ class BacktesterManager(QtWidgets.QWidget):
             self.process_optimization_finished_event)
 
         self.event_engine.register(EVENT_BACKTESTER_LOG, self.signal_log.emit)
-        self.event_engine.register(
-            EVENT_BACKTESTER_BACKTESTING_FINISHED, self.signal_backtesting_finished.emit)
-        self.event_engine.register(
-            EVENT_BACKTESTER_OPTIMIZATION_FINISHED, self.signal_optimization_finished.emit)
+        self.event_engine.register(EVENT_BACKTESTER_BACKTESTING_FINISHED, self.signal_backtesting_finished.emit)
+        self.event_engine.register(EVENT_BACKTESTER_OPTIMIZATION_FINISHED, self.signal_optimization_finished.emit)
 
     def process_log_event(self, event: Event) -> None:
         """"""
