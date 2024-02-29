@@ -568,6 +568,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         "daily_return": "日均收益率",
         "return_std": "收益标准差",
         "sharpe_ratio": "夏普比率",
+        "ewm_sharpe_ratio": "EWM夏普比率",
         "return_drawdown_ratio": "收益回撤比"
     }
 
@@ -621,6 +622,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["daily_return"] = f"{data['daily_return']:,.2f}%"
         data["return_std"] = f"{data['return_std']:,.2f}%"
         data["sharpe_ratio"] = f"{data['sharpe_ratio']:,.2f}"
+        data["ewm_sharpe_ratio"] = f"{data['ewm_sharpe_ratio']:,.2f}"
         data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
 
         for key, cell in self.cells.items():
@@ -837,6 +839,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
     DISPLAY_NAME_MAP: dict = {
         "总收益率": "total_return",
         "夏普比率": "sharpe_ratio",
+        "EWM夏普比率": "ewm_sharpe_ratio",
         "收益回撤比": "return_drawdown_ratio",
         "日均盈亏": "daily_net_pnl"
     }
