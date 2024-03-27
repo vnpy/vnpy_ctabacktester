@@ -22,12 +22,10 @@
 
 
 from pathlib import Path
-
 import importlib_metadata
 from vnpy.trader.app import BaseApp
 
 from .engine import BacktesterEngine, APP_NAME
-
 
 try:
     __version__ = importlib_metadata.version("vnpy_ctabacktester")
@@ -37,11 +35,12 @@ except importlib_metadata.PackageNotFoundError:
 
 class CtaBacktesterApp(BaseApp):
     """"""
+    from .locale import _
 
     app_name: str = APP_NAME
     app_module: str = __module__
     app_path: Path = Path(__file__).parent
-    display_name: str = "CTA回测"
+    display_name: str = _("CTA回测")
     engine_class: BacktesterEngine = BacktesterEngine
     widget_name: str = "BacktesterManager"
     icon_name: str = str(app_path.joinpath("ui", "backtester.ico"))
