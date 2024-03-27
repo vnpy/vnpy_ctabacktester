@@ -19,13 +19,13 @@ from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.database import BaseDatabase, get_database
 
 import vnpy_ctastrategy
-from vnpy_ctastrategy import CtaTemplate
+from vnpy_ctastrategy import CtaTemplate, TargetPosTemplate
 from vnpy_ctastrategy.backtesting import (
     BacktestingEngine,
     OptimizationSetting,
     BacktestingMode
 )
-
+from .locale import _
 
 APP_NAME = "CtaBacktester"
 
@@ -59,14 +59,14 @@ class BacktesterEngine(BaseEngine):
 
     def init_engine(self) -> None:
         """"""
-        self.write_log("初始化CTA回测引擎")
+        self.write_log(_("初始化CTA回测引擎"))
 
         self.backtesting_engine = BacktestingEngine()
         # Redirect log from backtesting engine outside.
         self.backtesting_engine.output = self.write_log
 
         self.load_strategy_class()
-        self.write_log("策略文件加载完成")
+        self.write_log(_("策略文件加载完成"))
 
         self.init_datafeed()
 
@@ -76,7 +76,7 @@ class BacktesterEngine(BaseEngine):
         """
         result: bool = self.datafeed.init(self.write_log)
         if result:
-            self.write_log("数据服务初始化成功")
+            self.write_log(_("数据服务初始化成功"))
 
     def write_log(self, msg: str) -> None:
         """"""
@@ -118,17 +118,23 @@ class BacktesterEngine(BaseEngine):
 
             for name in dir(module):
                 value = getattr(module, name)
-                if (isinstance(value, type) and issubclass(value, CtaTemplate) and value is not CtaTemplate):
+                if (
+                    isinstance(value, type)
+                    and issubclass(value, CtaTemplate)
+                    and value not in {CtaTemplate, TargetPosTemplate}
+                ):
                     self.classes[value.__name__] = value
         except:  # noqa
-            msg: str = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
+            msg: str = _("策略文件{}加载失败，触发异常：\n{}").format(
+                module_name, traceback.format_exc()
+            )
             self.write_log(msg)
 
     def reload_strategy_class(self) -> None:
         """"""
         self.classes.clear()
         self.load_strategy_class()
-        self.write_log("策略文件重载刷新完成")
+        self.write_log(_("策略文件重载刷新完成"))
 
     def get_strategy_class_names(self) -> list:
         """"""
@@ -180,11 +186,14 @@ class BacktesterEngine(BaseEngine):
         )
 
         engine.load_data()
+        if not engine.history_data:
+            self.write_log(_("策略回测失败，历史数据为空"))
+            return
 
         try:
             engine.run_backtesting()
         except Exception:
-            msg: str = f"策略回测失败，触发异常：\n{traceback.format_exc()}"
+            msg: str = _("策略回测失败，触发异常：\n{}").format(traceback.format_exc())
             self.write_log(msg)
 
             self.thread = None
@@ -215,7 +224,7 @@ class BacktesterEngine(BaseEngine):
         setting: dict
     ) -> bool:
         if self.thread:
-            self.write_log("已有任务在运行中，请等待完成")
+            self.write_log(_("已有任务在运行中，请等待完成"))
             return False
 
         self.write_log("-" * 40)
@@ -321,7 +330,7 @@ class BacktesterEngine(BaseEngine):
 
         # Clear thread object handler.
         self.thread = None
-        self.write_log("多进程参数优化完成")
+        self.write_log(_("多进程参数优化完成"))
 
         # Put optimization done event
         event: Event = Event(EVENT_BACKTESTER_OPTIMIZATION_FINISHED)
@@ -344,7 +353,7 @@ class BacktesterEngine(BaseEngine):
         max_workers: int
     ) -> bool:
         if self.thread:
-            self.write_log("已有任务在运行中，请等待完成")
+            self.write_log(_("已有任务在运行中，请等待完成"))
             return False
 
         self.write_log("-" * 40)
@@ -380,12 +389,12 @@ class BacktesterEngine(BaseEngine):
         """
         执行下载任务
         """
-        self.write_log(f"{vt_symbol}-{interval}开始下载历史数据")
+        self.write_log(_("{}-{}开始下载历史数据").format(vt_symbol, interval))
 
         try:
             symbol, exchange = extract_vt_symbol(vt_symbol)
         except ValueError:
-            self.write_log(f"{vt_symbol}解析失败，请检查交易所后缀")
+            self.write_log(_("{}解析失败，请检查交易所后缀").format(vt_symbol))
             self.thread = None
             return
 
@@ -418,11 +427,11 @@ class BacktesterEngine(BaseEngine):
                 else:
                     self.database.save_bar_data(data)
 
-                self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
+                self.write_log(_("{}-{}历史数据下载完成").format(vt_symbol, interval))
             else:
-                self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")
+                self.write_log(_("数据下载失败，无法获取{}的历史数据").format(vt_symbol))
         except Exception:
-            msg: str = f"数据下载失败，触发异常：\n{traceback.format_exc()}"
+            msg: str = _("数据下载失败，触发异常：\n{}").format(traceback.format_exc())
             self.write_log(msg)
 
         # Clear thread object handler.
@@ -436,7 +445,7 @@ class BacktesterEngine(BaseEngine):
         end: datetime
     ) -> bool:
         if self.thread:
-            self.write_log("已有任务在运行中，请等待完成")
+            self.write_log(_("已有任务在运行中，请等待完成"))
             return False
 
         self.write_log("-" * 40)
