@@ -553,6 +553,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         "annual_return": _("年化收益"),
         "max_drawdown": _("最大回撤"),
         "max_ddpercent": _("百分比最大回撤"),
+        "max_drawdown_duration": _("最大回撤天数"),
 
         "total_net_pnl": _("总盈亏"),
         "total_commission": _("总手续费"),
@@ -610,6 +611,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["annual_return"] = f"{data['annual_return']:,.2f}%"
         data["max_drawdown"] = f"{data['max_drawdown']:,.2f}"
         data["max_ddpercent"] = f"{data['max_ddpercent']:,.2f}%"
+        data["max_drawdown_duration"] = f"{data['max_drawdown_duration']}%"
         data["total_net_pnl"] = f"{data['total_net_pnl']:,.2f}"
         data["total_commission"] = f"{data['total_commission']:,.2f}"
         data["total_slippage"] = f"{data['total_slippage']:,.2f}"
