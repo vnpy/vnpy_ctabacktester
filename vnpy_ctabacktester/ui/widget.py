@@ -624,6 +624,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["daily_return"] = f"{data['daily_return']:,.2f}%"
         data["return_std"] = f"{data['return_std']:,.2f}%"
         data["sharpe_ratio"] = f"{data['sharpe_ratio']:,.2f}"
+        data["ewm_sharpe"] = f"{data['ewm_sharpe']:,.2f}"
         data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
 
         for key, cell in self.cells.items():
@@ -840,6 +841,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
     DISPLAY_NAME_MAP: dict = {
         _("总收益率"): "total_return",
         _("夏普比率"): "sharpe_ratio",
+        _("EWM夏普"): "ewm_sharpe",
         _("收益回撤比"): "return_drawdown_ratio",
         _("日均盈亏"): "daily_net_pnl"
     }
