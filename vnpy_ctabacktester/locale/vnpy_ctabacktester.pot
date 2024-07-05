@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-07-04 15:51+0800\n"
+"POT-Creation-Date: 2024-07-05 10:31+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -106,7 +106,7 @@ msgstr ""
 msgid "成交记录"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:125 vnpy_ctabacktester\ui\widget.py:741
+#: vnpy_ctabacktester\ui\widget.py:125 vnpy_ctabacktester\ui\widget.py:742
 msgid "每日盈亏"
 msgstr ""
 
@@ -226,7 +226,7 @@ msgstr ""
 msgid "结束资金"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:552 vnpy_ctabacktester\ui\widget.py:842
+#: vnpy_ctabacktester\ui\widget.py:552 vnpy_ctabacktester\ui\widget.py:843
 msgid "总收益率"
 msgstr ""
 
@@ -246,7 +246,7 @@ msgstr ""
 msgid "最大回撤天数"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:558 vnpy_ctabacktester\ui\widget.py:1128
+#: vnpy_ctabacktester\ui\widget.py:558 vnpy_ctabacktester\ui\widget.py:1129
 msgid "总盈亏"
 msgstr ""
 
@@ -266,7 +266,7 @@ msgstr ""
 msgid "总成交笔数"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:564 vnpy_ctabacktester\ui\widget.py:846
+#: vnpy_ctabacktester\ui\widget.py:564 vnpy_ctabacktester\ui\widget.py:847
 msgid "日均盈亏"
 msgstr ""
 
@@ -294,211 +294,211 @@ msgstr ""
 msgid "收益标准差"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:572 vnpy_ctabacktester\ui\widget.py:843
+#: vnpy_ctabacktester\ui\widget.py:572 vnpy_ctabacktester\ui\widget.py:844
 msgid "夏普比率"
 msgstr ""
 
 #: vnpy_ctabacktester\ui\widget.py:573 vnpy_ctabacktester\ui\widget.py:845
-msgid "收益回撤比"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:657
-msgid "策略参数配置：{}"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:658
-msgid "确定"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:729
-msgid "账户净值"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:735
-msgid "净值回撤"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:746
-msgid "盈亏分布"
-msgstr ""
-
-#: vnpy_ctabacktester\ui\widget.py:844
 msgid "EWM夏普"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:874
+#: vnpy_ctabacktester\ui\widget.py:574 vnpy_ctabacktester\ui\widget.py:846
+msgid "收益回撤比"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:658
+msgid "策略参数配置：{}"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:659
+msgid "确定"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:730
+msgid "账户净值"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:736
+msgid "净值回撤"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:747
+msgid "盈亏分布"
+msgstr ""
+
+#: vnpy_ctabacktester\ui\widget.py:875
 msgid "设为0则自动根据CPU核心数启动对应数量的进程"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:877
+#: vnpy_ctabacktester\ui\widget.py:878
 msgid "优化目标"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:879
+#: vnpy_ctabacktester\ui\widget.py:880
 msgid "进程上限"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:881 vnpy_ctabacktester\ui\widget.py:1005
-#: vnpy_ctabacktester\ui\widget.py:1054
+#: vnpy_ctabacktester\ui\widget.py:882 vnpy_ctabacktester\ui\widget.py:1006
+#: vnpy_ctabacktester\ui\widget.py:1055
 msgid "参数"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:882
+#: vnpy_ctabacktester\ui\widget.py:883
 msgid "开始"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:883
+#: vnpy_ctabacktester\ui\widget.py:884
 msgid "步进"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:884
+#: vnpy_ctabacktester\ui\widget.py:885
 msgid "结束"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:887
+#: vnpy_ctabacktester\ui\widget.py:888
 msgid "优化参数配置：{}"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:918
+#: vnpy_ctabacktester\ui\widget.py:919
 msgid "多进程优化"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:923
+#: vnpy_ctabacktester\ui\widget.py:924
 msgid "遗传算法优化"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:997
+#: vnpy_ctabacktester\ui\widget.py:998
 msgid "参数优化结果"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1028
+#: vnpy_ctabacktester\ui\widget.py:1029
 msgid "保存"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1046
+#: vnpy_ctabacktester\ui\widget.py:1047
 msgid "保存数据"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1068
+#: vnpy_ctabacktester\ui\widget.py:1069
 msgid "成交号 "
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1069 vnpy_ctabacktester\ui\widget.py:1087
+#: vnpy_ctabacktester\ui\widget.py:1070 vnpy_ctabacktester\ui\widget.py:1088
 msgid "委托号"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1070 vnpy_ctabacktester\ui\widget.py:1088
+#: vnpy_ctabacktester\ui\widget.py:1071 vnpy_ctabacktester\ui\widget.py:1089
 msgid "代码"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1071 vnpy_ctabacktester\ui\widget.py:1089
+#: vnpy_ctabacktester\ui\widget.py:1072 vnpy_ctabacktester\ui\widget.py:1090
 msgid "交易所"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1072 vnpy_ctabacktester\ui\widget.py:1091
+#: vnpy_ctabacktester\ui\widget.py:1073 vnpy_ctabacktester\ui\widget.py:1092
 msgid "方向"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1073 vnpy_ctabacktester\ui\widget.py:1092
+#: vnpy_ctabacktester\ui\widget.py:1074 vnpy_ctabacktester\ui\widget.py:1093
 msgid "开平"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1074 vnpy_ctabacktester\ui\widget.py:1093
+#: vnpy_ctabacktester\ui\widget.py:1075 vnpy_ctabacktester\ui\widget.py:1094
 msgid "价格"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1075
+#: vnpy_ctabacktester\ui\widget.py:1076
 msgid "数量"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1076 vnpy_ctabacktester\ui\widget.py:1097
+#: vnpy_ctabacktester\ui\widget.py:1077 vnpy_ctabacktester\ui\widget.py:1098
 msgid "时间"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1077 vnpy_ctabacktester\ui\widget.py:1098
+#: vnpy_ctabacktester\ui\widget.py:1078 vnpy_ctabacktester\ui\widget.py:1099
 msgid "接口"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1090
+#: vnpy_ctabacktester\ui\widget.py:1091
 msgid "类型"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1094
+#: vnpy_ctabacktester\ui\widget.py:1095
 msgid "总数量"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1095
+#: vnpy_ctabacktester\ui\widget.py:1096
 msgid "已成交"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1096
+#: vnpy_ctabacktester\ui\widget.py:1097
 msgid "状态"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1119
+#: vnpy_ctabacktester\ui\widget.py:1120
 msgid "日期"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1120
+#: vnpy_ctabacktester\ui\widget.py:1121
 msgid "成交笔数"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1121
+#: vnpy_ctabacktester\ui\widget.py:1122
 msgid "开盘持仓"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1122
+#: vnpy_ctabacktester\ui\widget.py:1123
 msgid "收盘持仓"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1123
+#: vnpy_ctabacktester\ui\widget.py:1124
 msgid "成交额"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1124
+#: vnpy_ctabacktester\ui\widget.py:1125
 msgid "手续费"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1125
+#: vnpy_ctabacktester\ui\widget.py:1126
 msgid "滑点"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1126
+#: vnpy_ctabacktester\ui\widget.py:1127
 msgid "交易盈亏"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1127
+#: vnpy_ctabacktester\ui\widget.py:1128
 msgid "持仓盈亏"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1129
+#: vnpy_ctabacktester\ui\widget.py:1130
 msgid "净盈亏"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1207
+#: vnpy_ctabacktester\ui\widget.py:1208
 msgid "回测K线图表"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1219
+#: vnpy_ctabacktester\ui\widget.py:1220
 msgid "红色虚线 —— 盈利交易"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1223
+#: vnpy_ctabacktester\ui\widget.py:1224
 msgid "绿色虚线 —— 亏损交易"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1227
+#: vnpy_ctabacktester\ui\widget.py:1228
 msgid "黄色向上箭头 —— 买入开仓 Buy"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1231
+#: vnpy_ctabacktester\ui\widget.py:1232
 msgid "黄色向下箭头 —— 卖出平仓 Sell"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1235
+#: vnpy_ctabacktester\ui\widget.py:1236
 msgid "紫红向下箭头 —— 卖出开仓 Short"
 msgstr ""
 
-#: vnpy_ctabacktester\ui\widget.py:1239
+#: vnpy_ctabacktester\ui\widget.py:1240
 msgid "紫红向上箭头 —— 买入平仓 Cover"
 msgstr ""
