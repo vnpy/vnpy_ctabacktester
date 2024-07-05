@@ -570,6 +570,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         "daily_return": _("日均收益率"),
         "return_std": _("收益标准差"),
         "sharpe_ratio": _("夏普比率"),
+        "ewm_sharpe": _("EWM夏普"),
         "return_drawdown_ratio": _("收益回撤比")
     }
 
