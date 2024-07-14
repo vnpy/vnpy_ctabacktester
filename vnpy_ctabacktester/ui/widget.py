@@ -612,7 +612,6 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["annual_return"] = f"{data['annual_return']:,.2f}%"
         data["max_drawdown"] = f"{data['max_drawdown']:,.2f}"
         data["max_ddpercent"] = f"{data['max_ddpercent']:,.2f}%"
-        data["max_drawdown_duration"] = f"{data['max_drawdown_duration']}%"
         data["total_net_pnl"] = f"{data['total_net_pnl']:,.2f}"
         data["total_commission"] = f"{data['total_commission']:,.2f}"
         data["total_slippage"] = f"{data['total_slippage']:,.2f}"
