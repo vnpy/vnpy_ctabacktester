@@ -27,7 +27,7 @@ from ..engine import (
     EVENT_BACKTESTER_OPTIMIZATION_FINISHED,
     OptimizationSetting
 )
-
+from PySide6.QtWidgets import QDialog
 
 class BacktesterManager(QtWidgets.QWidget):
     """"""
@@ -352,7 +352,7 @@ class BacktesterManager(QtWidgets.QWidget):
         old_setting: dict = self.settings[class_name]
         dialog: BacktestingSettingEditor = BacktestingSettingEditor(class_name, old_setting)
         i: int = dialog.exec()
-        if i != dialog.Accepted:
+        if i != QDialog.Accepted:
             return
 
         new_setting: dict = dialog.get_setting()
@@ -592,7 +592,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         self.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.Stretch
         )
-        self.setEditTriggers(self.NoEditTriggers)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         for row, key in enumerate(self.KEY_NAME_MAP.keys()):
             cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
@@ -1003,7 +1003,7 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         table.setColumnCount(2)
         table.setRowCount(len(self.result_values))
         table.setHorizontalHeaderLabels([_("参数"), self.target_display])
-        table.setEditTriggers(table.NoEditTriggers)
+        table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         table.verticalHeader().setVisible(False)
 
         table.horizontalHeader().setSectionResizeMode(
