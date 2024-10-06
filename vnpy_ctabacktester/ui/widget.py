@@ -402,7 +402,7 @@ class BacktesterManager(QtWidgets.QWidget):
         parameters: dict = self.settings[class_name]
         dialog: OptimizationSettingEditor = OptimizationSettingEditor(class_name, parameters)
         i: int = dialog.exec()
-        if i != dialog.Accepted:
+        if i != QDialog.Accepted:
             return
 
         optimization_setting, use_ga, max_workers = dialog.get_setting()
