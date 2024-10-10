@@ -352,7 +352,7 @@ class BacktesterManager(QtWidgets.QWidget):
         old_setting: dict = self.settings[class_name]
         dialog: BacktestingSettingEditor = BacktestingSettingEditor(class_name, old_setting)
         i: int = dialog.exec()
-        if i != dialog.Accepted:
+        if i != dialog.DialogCode.Accepted:
             return
 
         new_setting: dict = dialog.get_setting()
@@ -402,7 +402,7 @@ class BacktesterManager(QtWidgets.QWidget):
         parameters: dict = self.settings[class_name]
         dialog: OptimizationSettingEditor = OptimizationSettingEditor(class_name, parameters)
         i: int = dialog.exec()
-        if i != dialog.Accepted:
+        if i != dialog.DialogCode.Accepted:
             return
 
         optimization_setting, use_ga, max_workers = dialog.get_setting()
@@ -590,9 +590,9 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         self.setColumnCount(1)
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.Stretch
+            QtWidgets.QHeaderView.ResizeMode.Stretch
         )
-        self.setEditTriggers(self.NoEditTriggers)
+        self.setEditTriggers(self.EditTrigger.NoEditTriggers)
 
         for row, key in enumerate(self.KEY_NAME_MAP.keys()):
             cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
@@ -1003,14 +1003,14 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         table.setColumnCount(2)
         table.setRowCount(len(self.result_values))
         table.setHorizontalHeaderLabels([_("参数"), self.target_display])
-        table.setEditTriggers(table.NoEditTriggers)
+        table.setEditTriggers(table.EditTrigger.NoEditTriggers)
         table.verticalHeader().setVisible(False)
 
         table.horizontalHeader().setSectionResizeMode(
-            0, QtWidgets.QHeaderView.ResizeToContents
+            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents
         )
         table.horizontalHeader().setSectionResizeMode(
-            1, QtWidgets.QHeaderView.Stretch
+            1, QtWidgets.QHeaderView.ResizeMode.Stretch
         )
 
         for n, tp in enumerate(self.result_values):
@@ -1018,8 +1018,8 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
             setting_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(str(setting))
             target_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(f"{target_value:.2f}")
 
-            setting_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            target_cell.setTextAlignment(QtCore.Qt.AlignCenter)
+            setting_cell.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            target_cell.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
             table.setItem(n, 0, setting_cell)
             table.setItem(n, 1, target_cell)
@@ -1314,7 +1314,7 @@ class CandleChartDialog(QtWidgets.QDialog):
             else:
                 color: str = "g"
 
-            pen: QtGui.QPen = pg.mkPen(color, width=1.5, style=QtCore.Qt.DashLine)
+            pen: QtGui.QPen = pg.mkPen(color, width=1.5, style=QtCore.Qt.PenStyle.DashLine)
             item: pg.PlotCurveItem = pg.PlotCurveItem(x, y, pen=pen)
 
             self.items.append(item)
