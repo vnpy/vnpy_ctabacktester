@@ -201,7 +201,7 @@ class BacktesterEngine(BaseEngine):
             return
 
         self.result_df = engine.calculate_result()
-        self.result_statistics = engine.calculate_statistics(output=False)
+        self.result_statistics = engine.calculate_statistics(df=self.result_df, output=False)
 
         # Clear thread object handler.
         self.thread = None
