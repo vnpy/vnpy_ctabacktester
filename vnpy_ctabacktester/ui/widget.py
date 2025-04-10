@@ -2,6 +2,7 @@ import csv
 import subprocess
 from datetime import datetime, timedelta
 from copy import copy
+from typing import Any
 
 import numpy as np
 import pyqtgraph as pg
@@ -278,10 +279,10 @@ class BacktesterManager(QtWidgets.QWidget):
         msg = event.data
         self.write_log(msg)
 
-    def write_log(self, msg) -> None:
+    def write_log(self, msg: str) -> None:
         """"""
         timestamp: str = datetime.now().strftime("%H:%M:%S")
-        msg: str = f"{timestamp}\t{msg}"
+        msg = f"{timestamp}\t{msg}"
         self.log_monitor.append(msg)
 
     def process_backtesting_finished_event(self, event: Event) -> None:
@@ -405,7 +406,7 @@ class BacktesterManager(QtWidgets.QWidget):
             return
 
         optimization_setting, use_ga, max_workers = dialog.get_setting()
-        self.target_display: str = dialog.target_display
+        self.target_display = dialog.target_display
 
         self.backtester_engine.start_optimization(
             class_name,
@@ -437,7 +438,7 @@ class BacktesterManager(QtWidgets.QWidget):
             start_date.month(),
             start_date.day(),
         )
-        start: datetime = start.replace(tzinfo=DB_TZ)
+        start= start.replace(tzinfo=DB_TZ)
 
         end: datetime = datetime(
             end_date.year(),
@@ -447,7 +448,7 @@ class BacktesterManager(QtWidgets.QWidget):
             59,
             59,
         )
-        end: datetime = end.replace(tzinfo=DB_TZ)
+        end = end.replace(tzinfo=DB_TZ)
 
         self.backtester_engine.start_downloading(
             vt_symbol,
@@ -665,7 +666,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
                 validator: QtGui.QIntValidator = QtGui.QIntValidator()
                 edit.setValidator(validator)
             elif type_ is float:
-                validator: QtGui.QDoubleValidator = QtGui.QDoubleValidator()
+                validator = QtGui.QDoubleValidator()
                 edit.setValidator(validator)
 
             form.addRow(f"{name} {type_}", edit)
@@ -778,7 +779,7 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         self.loss_pnl_bar.setOpts(x=[], height=[])
         self.distribution_curve.setData([], [])
 
-    def set_data(self, df) -> None:
+    def set_data(self, df: DataFrame) -> None:
         """"""
         if df is None:
             return
@@ -819,12 +820,12 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
 class DateAxis(pg.AxisItem):
     """Axis for showing date data"""
 
-    def __init__(self, dates: dict, *args, **kwargs) -> None:
+    def __init__(self, dates: dict, *args: Any, **kwargs: Any) -> None:
         """"""
         super().__init__(*args, **kwargs)
         self.dates: dict = dates
 
-    def tickStrings(self, values, scale, spacing) -> list:
+    def tickStrings(self, values: list, scale: float, spacing: float) -> list:
         """"""
         strings: list = []
         for v in values:
@@ -936,12 +937,12 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
 
     def generate_ga_setting(self) -> None:
         """"""
-        self.use_ga: bool = True
+        self.use_ga = True
         self.generate_setting()
 
     def generate_parallel_setting(self) -> None:
         """"""
-        self.use_ga: bool = False
+        self.use_ga = False
         self.generate_setting()
 
     def generate_setting(self) -> None:
@@ -1103,9 +1104,9 @@ class FloatCell(BaseCell):
     Cell used for showing pnl data.
     """
 
-    def __init__(self, content, data) -> None:
+    def __init__(self, content: Any, data: Any) -> None:
         """"""
-        content: str = f"{content:.2f}"
+        content = f"{content:.2f}"
         super().__init__(content, data)
 
 
@@ -1309,9 +1310,9 @@ class CandleChartDialog(QtWidgets.QDialog):
             if d["direction"] == Direction.LONG and close_price >= open_price:
                 color: str = "r"
             elif d["direction"] == Direction.SHORT and close_price <= open_price:
-                color: str = "r"
+                color = "r"
             else:
-                color: str = "g"
+                color = "g"
 
             pen: QtGui.QPen = pg.mkPen(color, width=1.5, style=QtCore.Qt.PenStyle.DashLine)
             item: pg.PlotCurveItem = pg.PlotCurveItem(x, y, pen=pen)
@@ -1332,13 +1333,13 @@ class CandleChartDialog(QtWidgets.QDialog):
                 open_y: float = open_bar.low_price
                 close_y: float = close_bar.high_price
             else:
-                scatter_color: str = "magenta"
-                open_symbol: str = "t"
-                close_symbol: str = "t1"
-                open_side: int = -1
-                close_side: int = 1
-                open_y: float = open_bar.high_price
-                close_y: float = close_bar.low_price
+                scatter_color = "magenta"
+                open_symbol = "t"
+                close_symbol = "t1"
+                open_side = -1
+                close_side = 1
+                open_y = open_bar.high_price
+                close_y = close_bar.low_price
 
             pen = pg.mkPen(QtGui.QColor(scatter_color))
             brush: QtGui.QBrush = pg.mkBrush(QtGui.QColor(scatter_color))
@@ -1408,14 +1409,14 @@ def generate_trade_pairs(trades: list) -> list:
     trade_pairs: list = []
 
     for trade in trades:
-        trade: TradeData = copy(trade)
+        trade = copy(trade)
 
         if trade.direction == Direction.LONG:
             same_direction: list = long_trades
             opposite_direction: list = short_trades
         else:
-            same_direction: list = short_trades
-            opposite_direction: list = long_trades
+            same_direction = short_trades
+            opposite_direction = long_trades
 
         while trade.volume and opposite_direction:
             open_trade: TradeData = opposite_direction[0]
