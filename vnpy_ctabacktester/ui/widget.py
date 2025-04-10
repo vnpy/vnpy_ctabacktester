@@ -2,7 +2,6 @@ import csv
 import subprocess
 from datetime import datetime, timedelta
 from copy import copy
-from typing import List, Tuple
 
 import numpy as np
 import pyqtgraph as pg
@@ -470,7 +469,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_backtesting_trades(self) -> None:
         """"""
         if not self.trade_dialog.is_updated():
-            trades: List[TradeData] = self.backtester_engine.get_all_trades()
+            trades: list[TradeData] = self.backtester_engine.get_all_trades()
             self.trade_dialog.update_data(trades)
 
         self.trade_dialog.exec_()
@@ -478,7 +477,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_backtesting_orders(self) -> None:
         """"""
         if not self.order_dialog.is_updated():
-            orders: List[OrderData] = self.backtester_engine.get_all_orders()
+            orders: list[OrderData] = self.backtester_engine.get_all_orders()
             self.order_dialog.update_data(orders)
 
         self.order_dialog.exec_()
@@ -486,7 +485,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def show_daily_results(self) -> None:
         """"""
         if not self.daily_dialog.is_updated():
-            results: List[DailyResult] = self.backtester_engine.get_all_daily_results()
+            results: list[DailyResult] = self.backtester_engine.get_all_daily_results()
             self.daily_dialog.update_data(results)
 
         self.daily_dialog.exec_()
@@ -497,7 +496,7 @@ class BacktesterManager(QtWidgets.QWidget):
             history: list = self.backtester_engine.get_history_data()
             self.candle_dialog.update_history(history)
 
-            trades: List[TradeData] = self.backtester_engine.get_all_trades()
+            trades: list[TradeData] = self.backtester_engine.get_all_trades()
             self.candle_dialog.update_trades(trades)
 
         self.candle_dialog.exec_()
@@ -641,7 +640,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         self, class_name: str, parameters: dict
     ) -> None:
         """"""
-        super(BacktestingSettingEditor, self).__init__()
+        super().__init__()
 
         self.class_name: str = class_name
         self.parameters: dict = parameters
@@ -696,7 +695,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
             edit, type_ = tp
             value_text = edit.text()
 
-            if type_ == bool:
+            if type_ is bool:
                 if value_text == "True":
                     value = True
                 else:
@@ -971,7 +970,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
 
         self.accept()
 
-    def get_setting(self) -> Tuple[OptimizationSetting, bool, int]:
+    def get_setting(self) -> tuple[OptimizationSetting, bool, int]:
         """"""
         return self.optimization_setting, self.use_ga, self.worker_spin.value()
 
