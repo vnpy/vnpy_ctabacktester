@@ -1,4 +1,3 @@
-from ast import List
 import importlib
 import traceback
 from datetime import datetime
@@ -8,13 +7,12 @@ from inspect import getfile
 from glob import glob
 from types import ModuleType
 from pandas import DataFrame
-from typing import Optional
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.constant import Interval
 from vnpy.trader.utility import extract_vt_symbol
-from vnpy.trader.object import HistoryRequest, TickData, ContractData, BarData
+from vnpy.trader.object import HistoryRequest, TickData, ContractData
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.database import BaseDatabase, get_database
 
@@ -45,17 +43,17 @@ class BacktesterEngine(BaseEngine):
 
         self.classes: dict = {}
         self.backtesting_engine: BacktestingEngine = None
-        self.thread: Thread = None
+        self.thread: Thread | None = None
 
         self.datafeed: BaseDatafeed = get_datafeed()
         self.database: BaseDatabase = get_database()
 
         # Backtesting reuslt
-        self.result_df: DataFrame = None
-        self.result_statistics: dict = None
+        self.result_df: DataFrame | None = None
+        self.result_statistics: dict | None = None
 
         # Optimization result
-        self.result_values: list = None
+        self.result_values: list | None = None
 
     def init_engine(self) -> None:
         """"""
@@ -164,7 +162,7 @@ class BacktesterEngine(BaseEngine):
         if interval == Interval.TICK.value:
             mode: BacktestingMode = BacktestingMode.TICK
         else:
-            mode: BacktestingMode = BacktestingMode.BAR
+            mode = BacktestingMode.BAR
 
         engine.set_parameters(
             vt_symbol=vt_symbol,
@@ -179,7 +177,7 @@ class BacktesterEngine(BaseEngine):
             mode=mode
         )
 
-        strategy_class: type = self.classes[class_name]
+        strategy_class: type[CtaTemplate] = self.classes[class_name]
         engine.add_strategy(
             strategy_class,
             setting
@@ -253,18 +251,19 @@ class BacktesterEngine(BaseEngine):
         """"""
         return self.result_df
 
-    def get_result_statistics(self) -> dict:
+    def get_result_statistics(self) -> dict | None:
         """"""
         return self.result_statistics
 
-    def get_result_values(self) -> list:
+    def get_result_values(self) -> list | None:
         """"""
         return self.result_values
 
     def get_default_setting(self, class_name: str) -> dict:
         """"""
-        strategy_class: type = self.classes[class_name]
-        return strategy_class.get_class_parameters()
+        strategy_class: type[CtaTemplate] = self.classes[class_name]
+        setting: dict = strategy_class.get_class_parameters()
+        return setting
 
     def run_optimization(
         self,
@@ -280,7 +279,7 @@ class BacktesterEngine(BaseEngine):
         capital: int,
         optimization_setting: OptimizationSetting,
         use_ga: bool,
-        max_workers: int
+        max_workers: int | None = None
     ) -> None:
         """"""
         self.result_values = None
@@ -291,7 +290,7 @@ class BacktesterEngine(BaseEngine):
         if interval == Interval.TICK.value:
             mode: BacktestingMode = BacktestingMode.TICK
         else:
-            mode: BacktestingMode = BacktestingMode.BAR
+            mode = BacktestingMode.BAR
 
         engine.set_parameters(
             vt_symbol=vt_symbol,
@@ -306,7 +305,7 @@ class BacktesterEngine(BaseEngine):
             mode=mode
         )
 
-        strategy_class: type = self.classes[class_name]
+        strategy_class: type[CtaTemplate] = self.classes[class_name]
         engine.add_strategy(
             strategy_class,
             {}
@@ -409,18 +408,18 @@ class BacktesterEngine(BaseEngine):
 
         try:
             if interval == "tick":
-                data: List[TickData] = self.datafeed.query_tick_history(req, self.write_log)
+                data: list[TickData] = self.datafeed.query_tick_history(req, self.write_log)
             else:
-                contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
+                contract: ContractData | None = self.main_engine.get_contract(vt_symbol)
 
                 # If history data provided in gateway, then query
                 if contract and contract.history_data:
-                    data: List[BarData] = self.main_engine.query_history(
+                    data = self.main_engine.query_history(
                         req, contract.gateway_name
                     )
                 # Otherwise use RQData to query data
                 else:
-                    data: List[BarData] = self.datafeed.query_bar_history(req, self.write_log)
+                    data = self.datafeed.query_bar_history(req, self.write_log)
 
             if data:
                 if interval == "tick":
@@ -465,22 +464,26 @@ class BacktesterEngine(BaseEngine):
 
     def get_all_trades(self) -> list:
         """"""
-        return self.backtesting_engine.get_all_trades()
+        trades: list = self.backtesting_engine.get_all_trades()
+        return trades
 
     def get_all_orders(self) -> list:
         """"""
-        return self.backtesting_engine.get_all_orders()
+        orders: list = self.backtesting_engine.get_all_orders()
+        return orders
 
     def get_all_daily_results(self) -> list:
         """"""
-        return self.backtesting_engine.get_all_daily_results()
+        results: list = self.backtesting_engine.get_all_daily_results()
+        return results
 
     def get_history_data(self) -> list:
         """"""
-        return self.backtesting_engine.history_data
+        history_data: list = self.backtesting_engine.history_data
+        return history_data
 
     def get_strategy_class_file(self, class_name: str) -> str:
         """"""
-        strategy_class: type = self.classes[class_name]
+        strategy_class: type[CtaTemplate] = self.classes[class_name]
         file_path: str = getfile(strategy_class)
         return file_path
