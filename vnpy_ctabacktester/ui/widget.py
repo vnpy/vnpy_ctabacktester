@@ -1,6 +1,6 @@
-import csv
 import os
 import platform
+import csv
 import shutil
 import subprocess
 from datetime import datetime, timedelta
@@ -512,29 +512,18 @@ class BacktesterManager(QtWidgets.QWidget):
             return
 
         file_path: str = self.backtester_engine.get_strategy_class_file(class_name)
-        system = platform.system()
-        # 区分windows和linux，(mac未处理)
-        if system == "Linux":
-            # 检查是否有 code 命令或使用pycharm-community
-            if shutil.which("code"):
-                # 使用 os.system 打开文件
-                os.system(f"code {file_path}")
-            else:
-                QtWidgets.QMessageBox.warning(
-                        self,
-                        _("启动代码编辑器失败"),
-                        _("请检查是否安装了Visual Studio Code，并将其路径添加到了系统全局变量中！")
-                    )
-        else:
-            cmd: list = ["code", file_path]
 
-            p: subprocess.CompletedProcess = subprocess.run(cmd, shell=True)
-            if p.returncode:
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    _("启动代码编辑器失败"),
-                    _("请检查是否安装了Visual Studio Code，并将其路径添加到了系统全局变量中！")
-                )
+        if shutil.which("code"):
+            if platform.system() == "Windows":
+                subprocess.run(["code", file_path], shell=True)
+            else:
+                os.system(f"code {file_path}")
+        else:
+            QtWidgets.QMessageBox.warning(
+                self,
+                _("启动代码编辑器失败"),
+                _("请检查是否安装了Visual Studio Code，并将其路径添加到了系统全局变量中！")
+            )
 
     def reload_strategy_class(self) -> None:
         """"""
