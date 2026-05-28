@@ -60,6 +60,9 @@ class BacktesterManager(QtWidgets.QWidget):
         self.init_strategy_settings()
         self.load_backtesting_setting()
 
+        # 切换策略时自动恢复该策略的历史配置
+        self.class_combo.currentTextChanged.connect(self.on_strategy_changed)
+
     def init_strategy_settings(self) -> None:
         """"""
         self.class_names = self.backtester_engine.get_strategy_class_names()
@@ -239,31 +242,74 @@ class BacktesterManager(QtWidgets.QWidget):
         self.setLayout(hbox)
 
     def load_backtesting_setting(self) -> None:
-        """"""
-        setting: dict = load_json(self.setting_filename)
+        """加载回测配置，支持按策略名存储多组配置"""
+        all_settings: dict = load_json(self.setting_filename)
+        if not all_settings:
+            return
+
+        # 兼容旧版单一配置格式（含 class_name 键的 flat dict）
+        if "class_name" in all_settings:
+            class_name: str = all_settings["class_name"]
+            migrated: dict = {
+                "_last_used": class_name,
+                class_name: {k: v for k, v in all_settings.items() if k != "class_name"}
+            }
+            all_settings = migrated
+            save_json(self.setting_filename, all_settings)
+
+        # 恢复上次使用的策略
+        last_used: str = all_settings.get("_last_used", "")
+        if last_used:
+            idx: int = self.class_combo.findText(last_used)
+            if idx >= 0:
+                self.class_combo.setCurrentIndex(idx)
+
+        # 加载当前策略的配置
+        current_class: str = self.class_combo.currentText()
+        if current_class:
+            self._apply_strategy_setting(all_settings.get(current_class, {}))
+
+    def _apply_strategy_setting(self, setting: dict) -> None:
+        """将配置项应用到界面控件"""
         if not setting:
             return
 
-        self.class_combo.setCurrentIndex(
-            self.class_combo.findText(setting["class_name"])
-        )
+        if "vt_symbol" in setting:
+            self.symbol_line.setText(setting["vt_symbol"])
 
-        self.symbol_line.setText(setting["vt_symbol"])
-
-        self.interval_combo.setCurrentIndex(
-            self.interval_combo.findText(setting["interval"])
-        )
+        if "interval" in setting:
+            self.interval_combo.setCurrentIndex(
+                self.interval_combo.findText(setting["interval"])
+            )
 
         start_str: str = setting.get("start", "")
         if start_str:
             start_dt: QtCore.QDate = QtCore.QDate.fromString(start_str, "yyyy-MM-dd")
             self.start_date_edit.setDate(start_dt)
 
-        self.rate_line.setText(str(setting["rate"]))
-        self.slippage_line.setText(str(setting["slippage"]))
-        self.size_line.setText(str(setting["size"]))
-        self.pricetick_line.setText(str(setting["pricetick"]))
-        self.capital_line.setText(str(setting["capital"]))
+        if "rate" in setting:
+            self.rate_line.setText(str(setting["rate"]))
+        if "slippage" in setting:
+            self.slippage_line.setText(str(setting["slippage"]))
+        if "size" in setting:
+            self.size_line.setText(str(setting["size"]))
+        if "pricetick" in setting:
+            self.pricetick_line.setText(str(setting["pricetick"]))
+        if "capital" in setting:
+            self.capital_line.setText(str(setting["capital"]))
+
+    def on_strategy_changed(self, class_name: str) -> None:
+        """切换策略时自动恢复该策略的历史配置"""
+        if not class_name:
+            return
+
+        all_settings: dict = load_json(self.setting_filename)
+        if not all_settings:
+            return
+
+        setting: dict = all_settings.get(class_name, {})
+        if setting:
+            self._apply_strategy_setting(setting)
 
     def register_event(self) -> None:
         """"""
@@ -339,9 +385,8 @@ class BacktesterManager(QtWidgets.QWidget):
             self.write_log(_("本地代码的交易所后缀不正确，请检查"))
             return
 
-        # Save backtesting parameters
+        # Save backtesting parameters (按策略名分组存储)
         backtesting_setting: dict = {
-            "class_name": class_name,
             "vt_symbol": vt_symbol,
             "interval": interval,
             "start": start.strftime("%Y-%m-%d"),
@@ -351,7 +396,10 @@ class BacktesterManager(QtWidgets.QWidget):
             "pricetick": pricetick,
             "capital": capital
         }
-        save_json(self.setting_filename, backtesting_setting)
+        all_settings: dict = load_json(self.setting_filename)
+        all_settings[class_name] = backtesting_setting
+        all_settings["_last_used"] = class_name
+        save_json(self.setting_filename, all_settings)
 
         # Get strategy setting
         old_setting: dict = self.settings[class_name]
