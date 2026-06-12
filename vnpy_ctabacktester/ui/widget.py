@@ -2,6 +2,7 @@ import platform
 import csv
 import shutil
 import subprocess
+import traceback
 from datetime import datetime, timedelta
 from copy import copy
 from typing import Any, cast
@@ -19,6 +20,7 @@ from vnpy.chart import ChartWidget, CandleItem, VolumeItem
 from vnpy.trader.utility import load_json, save_json
 from vnpy.trader.object import BarData, TradeData, OrderData
 from vnpy.trader.database import DB_TZ
+from vnpy.trader.setting import SETTINGS
 from vnpy_ctastrategy.backtesting import DailyResult
 
 from ..locale import _
@@ -78,11 +80,62 @@ class BacktesterManager(QtWidgets.QWidget):
         # Setting Part
         self.class_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
 
-        self.symbol_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit("IF88.CFFEX")
+        self.datafeed_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        self.datafeed_combo.setEditable(True)
+
+        datafeed_names: list[str] = [
+            SETTINGS["datafeed.name"],
+            "rqdata",
+            "xt",
+            "wind",
+            "tushare",
+            "tinysoft"
+        ]
+        try:
+            from ..crypto import available_crypto_gateways
+
+            datafeed_names.extend(available_crypto_gateways().keys())
+        except Exception:
+            datafeed_names.extend([
+                "binance_spot",
+                "binance_usdt_futures",
+                "binance_coin_futures",
+                "huobi_spot",
+                "gateio_futures",
+                "bitmex",
+                "bitfinex",
+                "bitstamp",
+                "coinbase"
+            ])
+
+        for datafeed_name in datafeed_names:
+            if datafeed_name and self.datafeed_combo.findText(datafeed_name) == -1:
+                self.datafeed_combo.addItem(datafeed_name)
+
+        self.symbol_source_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        self.symbol_source_combo.addItem(_("本地"), "local")
+        self.symbol_source_combo.addItem(_("数据源Reload"), "source")
+        self.symbol_source_combo.currentIndexChanged.connect(self.reload_symbol_choices)
+
+        self.symbol_reload_button: QtWidgets.QPushButton = QtWidgets.QPushButton(_("刷新代码"))
+        self.symbol_reload_button.clicked.connect(self.reload_symbol_choices)
+
+        self.symbol_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        self.symbol_combo.setEditable(True)
+        self.symbol_combo.addItem("IF88.CFFEX")
 
         self.interval_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        self.interval_combo.setEditable(True)
         for interval in Interval:
             self.interval_combo.addItem(interval.value)
+
+        self.interval_source_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        self.interval_source_combo.addItem(_("本地"), "local")
+        self.interval_source_combo.addItem(_("数据源Reload"), "source")
+        self.interval_source_combo.currentIndexChanged.connect(self.reload_interval_choices)
+
+        self.interval_reload_button: QtWidgets.QPushButton = QtWidgets.QPushButton(_("刷新周期"))
+        self.interval_reload_button.clicked.connect(self.reload_interval_choices)
 
         end_dt: datetime = datetime.now()
         start_dt: datetime = end_dt - timedelta(days=3 * 365)
@@ -155,7 +208,26 @@ class BacktesterManager(QtWidgets.QWidget):
 
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
         form.addRow(_("交易策略"), self.class_combo)
-        form.addRow(_("本地代码"), self.symbol_line)
+        form.addRow(_("行情数据源"), self.datafeed_combo)
+
+        symbol_source_hbox: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
+        symbol_source_hbox.addWidget(self.symbol_source_combo)
+        symbol_source_hbox.addWidget(self.symbol_reload_button)
+
+        symbol_source_widget: QtWidgets.QWidget = QtWidgets.QWidget()
+        symbol_source_widget.setLayout(symbol_source_hbox)
+
+        form.addRow(_("代码来源"), symbol_source_widget)
+        form.addRow(_("本地代码"), self.symbol_combo)
+
+        interval_source_hbox: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
+        interval_source_hbox.addWidget(self.interval_source_combo)
+        interval_source_hbox.addWidget(self.interval_reload_button)
+
+        interval_source_widget: QtWidgets.QWidget = QtWidgets.QWidget()
+        interval_source_widget.setLayout(interval_source_hbox)
+
+        form.addRow(_("周期来源"), interval_source_widget)
         form.addRow(_("K线周期"), self.interval_combo)
         form.addRow(_("开始日期"), self.start_date_edit)
         form.addRow(_("结束日期"), self.end_date_edit)
@@ -238,6 +310,9 @@ class BacktesterManager(QtWidgets.QWidget):
         hbox.addWidget(right_widget)
         self.setLayout(hbox)
 
+        self.datafeed_combo.currentTextChanged.connect(self.process_datafeed_changed)
+        self.symbol_combo.currentTextChanged.connect(self.process_symbol_changed)
+
     def load_backtesting_setting(self) -> None:
         """"""
         setting: dict = load_json(self.setting_filename)
@@ -248,11 +323,34 @@ class BacktesterManager(QtWidgets.QWidget):
             self.class_combo.findText(setting["class_name"])
         )
 
-        self.symbol_line.setText(setting["vt_symbol"])
+        symbol_source: str = setting.get("symbol_source", "local")
+        symbol_source_index: int = self.symbol_source_combo.findData(symbol_source)
+        if symbol_source_index != -1:
+            self.symbol_source_combo.blockSignals(True)
+            self.symbol_source_combo.setCurrentIndex(symbol_source_index)
+            self.symbol_source_combo.blockSignals(False)
+
+        vt_symbol: str = setting["vt_symbol"]
+        if self.symbol_combo.findText(vt_symbol) == -1:
+            self.symbol_combo.addItem(vt_symbol)
+        self.symbol_combo.setCurrentText(vt_symbol)
+
+        datafeed_name: str = setting.get("datafeed_name", SETTINGS["datafeed.name"])
+        if datafeed_name:
+            if self.datafeed_combo.findText(datafeed_name) == -1:
+                self.datafeed_combo.addItem(datafeed_name)
+            self.datafeed_combo.setCurrentText(datafeed_name)
 
         self.interval_combo.setCurrentIndex(
             self.interval_combo.findText(setting["interval"])
         )
+
+        interval_source: str = setting.get("interval_source", "local")
+        interval_source_index: int = self.interval_source_combo.findData(interval_source)
+        if interval_source_index != -1:
+            self.interval_source_combo.blockSignals(True)
+            self.interval_source_combo.setCurrentIndex(interval_source_index)
+            self.interval_source_combo.blockSignals(False)
 
         start_str: str = setting.get("start", "")
         if start_str:
@@ -288,6 +386,98 @@ class BacktesterManager(QtWidgets.QWidget):
         msg = f"{timestamp}\t{msg}"
         self.log_monitor.append(msg)
 
+    def process_datafeed_changed(self, datafeed_name: str) -> None:
+        """"""
+        if self.symbol_source_combo.currentData() == "local":
+            self.reload_symbol_choices()
+        else:
+            self.write_log(_("行情数据源已切换，可点击[刷新代码]从数据源Reload"))
+
+        if self.interval_source_combo.currentData() == "local":
+            self.reload_interval_choices()
+        else:
+            self.write_log(_("行情数据源已切换，可点击[刷新周期]从数据源Reload"))
+
+    def process_symbol_changed(self, vt_symbol: str) -> None:
+        """"""
+        if self.interval_source_combo.currentData() == "local":
+            self.reload_interval_choices()
+
+    def reload_symbol_choices(self, *args: Any) -> None:
+        """"""
+        try:
+            mode: str = self.symbol_source_combo.currentData()
+
+            if mode == "source":
+                datafeed_name: str = self.datafeed_combo.currentText().strip()
+                symbols: list[str] = self.backtester_engine.get_source_vt_symbols(datafeed_name)
+            else:
+                symbols = self.backtester_engine.get_local_vt_symbols()
+        except Exception:
+            self.write_log(
+                _("加载本地代码候选项失败，触发异常：\n{}").format(
+                    traceback.format_exc()
+                )
+            )
+            return
+
+        if not symbols:
+            self.write_log(_("没有加载到可选本地代码，可继续手动输入"))
+            return
+
+        current_symbol: str = self.symbol_combo.currentText().strip()
+        self.symbol_combo.blockSignals(True)
+        self.symbol_combo.clear()
+
+        for vt_symbol in symbols:
+            self.symbol_combo.addItem(vt_symbol)
+
+        if current_symbol:
+            if self.symbol_combo.findText(current_symbol) == -1:
+                self.symbol_combo.insertItem(0, current_symbol)
+            self.symbol_combo.setCurrentText(current_symbol)
+
+        self.symbol_combo.blockSignals(False)
+        self.write_log(_("已加载{}个本地代码候选项").format(len(symbols)))
+
+    def reload_interval_choices(self, *args: Any) -> None:
+        """"""
+        try:
+            mode: str = self.interval_source_combo.currentData()
+            vt_symbol: str = self.symbol_combo.currentText().strip()
+
+            if mode == "source":
+                datafeed_name: str = self.datafeed_combo.currentText().strip()
+                intervals: list[str] = self.backtester_engine.get_source_intervals(datafeed_name)
+            else:
+                intervals = self.backtester_engine.get_local_intervals(vt_symbol)
+        except Exception:
+            self.write_log(
+                _("加载K线周期候选项失败，触发异常：\n{}").format(
+                    traceback.format_exc()
+                )
+            )
+            return
+
+        if not intervals:
+            self.write_log(_("没有加载到可选K线周期，可继续手动输入"))
+            return
+
+        current_interval: str = self.interval_combo.currentText().strip()
+        self.interval_combo.blockSignals(True)
+        self.interval_combo.clear()
+
+        for interval in intervals:
+            self.interval_combo.addItem(interval)
+
+        if current_interval:
+            if self.interval_combo.findText(current_interval) == -1:
+                self.interval_combo.insertItem(0, current_interval)
+            self.interval_combo.setCurrentText(current_interval)
+
+        self.interval_combo.blockSignals(False)
+        self.write_log(_("已加载{}个K线周期候选项").format(len(intervals)))
+
     def process_backtesting_finished_event(self, event: Event) -> None:
         """"""
         statistics: dict | None = self.backtester_engine.get_result_statistics()
@@ -319,7 +509,8 @@ class BacktesterManager(QtWidgets.QWidget):
             self.write_log(_("请选择要回测的策略"))
             return
 
-        vt_symbol: str = self.symbol_line.text()
+        datafeed_name: str = self.datafeed_combo.currentText().strip()
+        vt_symbol: str = self.symbol_combo.currentText().strip()
         interval: str = self.interval_combo.currentText()
         start: datetime = cast(datetime, self.start_date_edit.dateTime().toPython())
         end: datetime = cast(datetime, self.end_date_edit.dateTime().toPython())
@@ -342,6 +533,9 @@ class BacktesterManager(QtWidgets.QWidget):
         # Save backtesting parameters
         backtesting_setting: dict = {
             "class_name": class_name,
+            "datafeed_name": datafeed_name,
+            "symbol_source": self.symbol_source_combo.currentData(),
+            "interval_source": self.interval_source_combo.currentData(),
             "vt_symbol": vt_symbol,
             "interval": interval,
             "start": start.strftime("%Y-%m-%d"),
@@ -394,7 +588,7 @@ class BacktesterManager(QtWidgets.QWidget):
     def start_optimization(self) -> None:
         """"""
         class_name: str = self.class_combo.currentText()
-        vt_symbol: str = self.symbol_line.text()
+        vt_symbol: str = self.symbol_combo.currentText().strip()
         interval: str = self.interval_combo.currentText()
         start: datetime = cast(datetime, self.start_date_edit.dateTime().toPython())
         end: datetime = cast(datetime, self.end_date_edit.dateTime().toPython())
@@ -433,7 +627,9 @@ class BacktesterManager(QtWidgets.QWidget):
 
     def start_downloading(self) -> None:
         """"""
-        vt_symbol: str = self.symbol_line.text()
+        class_name: str = self.class_combo.currentText()
+        datafeed_name: str = self.datafeed_combo.currentText().strip()
+        vt_symbol: str = self.symbol_combo.currentText().strip()
         interval: str = self.interval_combo.currentText()
         start_date: QtCore.QDate = self.start_date_edit.date()
         end_date: QtCore.QDate = self.end_date_edit.date()
@@ -455,7 +651,24 @@ class BacktesterManager(QtWidgets.QWidget):
         )
         end = end.replace(tzinfo=DB_TZ)
 
+        downloading_setting: dict = {
+            "class_name": class_name,
+            "datafeed_name": datafeed_name,
+            "symbol_source": self.symbol_source_combo.currentData(),
+            "interval_source": self.interval_source_combo.currentData(),
+            "vt_symbol": vt_symbol,
+            "interval": interval,
+            "start": start.strftime("%Y-%m-%d"),
+            "rate": self.rate_line.text(),
+            "slippage": self.slippage_line.text(),
+            "size": self.size_line.text(),
+            "pricetick": self.pricetick_line.text(),
+            "capital": self.capital_line.text()
+        }
+        save_json(self.setting_filename, downloading_setting)
+
         self.backtester_engine.start_downloading(
+            datafeed_name,
             vt_symbol,
             interval,
             start,
