@@ -1,3 +1,5 @@
+"""导出CTA回测界面。"""
+
 from .widget import BacktesterManager
 
 

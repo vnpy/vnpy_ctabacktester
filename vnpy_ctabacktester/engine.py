@@ -1,3 +1,5 @@
+"""CTA回测引擎。"""
+
 import importlib
 import traceback
 from datetime import datetime
@@ -34,11 +36,11 @@ EVENT_BACKTESTER_OPTIMIZATION_FINISHED = "eBacktesterOptimizationFinished"
 
 class BacktesterEngine(BaseEngine):
     """
-    For running CTA strategy backtesting.
+    用于运行 CTA 策略回测。
     """
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
-        """"""
+        """初始化策略类容器、数据源和回测结果。"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
         self.classes: dict = {}
@@ -56,7 +58,7 @@ class BacktesterEngine(BaseEngine):
         self.result_values: list | None = None
 
     def init_engine(self) -> None:
-        """"""
+        """创建回测引擎、加载策略类并初始化数据服务。"""
         self.write_log(_("初始化CTA回测引擎"))
 
         self.backtesting_engine = BacktestingEngine()
@@ -70,21 +72,21 @@ class BacktesterEngine(BaseEngine):
 
     def init_datafeed(self) -> None:
         """
-        Init datafeed client.
+        初始化数据服务客户端。
         """
         result: bool = self.datafeed.init(self.write_log)
         if result:
             self.write_log(_("数据服务初始化成功"))
 
     def write_log(self, msg: str) -> None:
-        """"""
+        """发出回测日志事件。"""
         event: Event = Event(EVENT_BACKTESTER_LOG)
         event.data = msg
         self.event_engine.put(event)
 
     def load_strategy_class(self) -> None:
         """
-        Load strategy class from source code.
+        从源代码加载策略类。
         """
         app_path: Path = Path(vnpy_ctastrategy.__file__).parent
         path1: Path = app_path.joinpath("strategies")
@@ -95,7 +97,7 @@ class BacktesterEngine(BaseEngine):
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = "") -> None:
         """
-        Load strategy class from certain folder.
+        从指定目录加载策略类。
         """
         for suffix in ["py", "pyd", "so"]:
             pathname: str = str(path.joinpath(f"*.{suffix}"))
@@ -106,7 +108,7 @@ class BacktesterEngine(BaseEngine):
 
     def load_strategy_class_from_module(self, module_name: str) -> None:
         """
-        Load strategy class from module file.
+        从模块文件加载策略类。
         """
         try:
             module: ModuleType = importlib.import_module(module_name)
@@ -129,13 +131,13 @@ class BacktesterEngine(BaseEngine):
             self.write_log(msg)
 
     def reload_strategy_class(self) -> None:
-        """"""
+        """清空并重新加载策略类。"""
         self.classes.clear()
         self.load_strategy_class()
         self.write_log(_("策略文件重载刷新完成"))
 
     def get_strategy_class_names(self) -> list:
-        """"""
+        """返回已加载策略类名。"""
         return list(self.classes.keys())
 
     def run_backtesting(
@@ -152,7 +154,7 @@ class BacktesterEngine(BaseEngine):
         capital: int,
         setting: dict
     ) -> None:
-        """"""
+        """清空上次结果后跑完回测，并计算逐日盈亏和统计指标。"""
         self.result_df = None
         self.result_statistics = None
 
@@ -222,6 +224,7 @@ class BacktesterEngine(BaseEngine):
         capital: float,
         setting: dict
     ) -> bool:
+        """已有任务在运行时返回失败，否则在线程中启动回测。"""
         if self.thread:
             self.write_log(_("已有任务在运行中，请等待完成"))
             return False
@@ -248,19 +251,19 @@ class BacktesterEngine(BaseEngine):
         return True
 
     def get_result_df(self) -> DataFrame | None:
-        """"""
+        """返回回测逐日结果表。"""
         return self.result_df
 
     def get_result_statistics(self) -> dict | None:
-        """"""
+        """返回回测统计指标。"""
         return self.result_statistics
 
     def get_result_values(self) -> list | None:
-        """"""
+        """返回参数优化结果。"""
         return self.result_values
 
     def get_default_setting(self, class_name: str) -> dict:
-        """"""
+        """返回策略类的默认参数。"""
         strategy_class: type[CtaTemplate] = self.classes[class_name]
         setting: dict = strategy_class.get_class_parameters()
         return setting
@@ -281,7 +284,7 @@ class BacktesterEngine(BaseEngine):
         use_ga: bool,
         max_workers: int | None = None
     ) -> None:
-        """"""
+        """按use_ga选择遗传算法或穷举，跑完后发出优化完成事件。"""
         self.result_values = None
 
         engine: BacktestingEngine = self.backtesting_engine
@@ -352,6 +355,7 @@ class BacktesterEngine(BaseEngine):
         use_ga: bool,
         max_workers: int
     ) -> bool:
+        """已有任务在运行时返回失败，否则在线程中启动参数优化。"""
         if self.thread:
             self.write_log(_("已有任务在运行中，请等待完成"))
             return False
@@ -386,9 +390,7 @@ class BacktesterEngine(BaseEngine):
         start: datetime,
         end: datetime
     ) -> None:
-        """
-        执行下载任务
-        """
+        """执行下载任务。"""
         self.write_log(_("{}-{}开始下载历史数据").format(vt_symbol, interval))
 
         try:
@@ -445,6 +447,7 @@ class BacktesterEngine(BaseEngine):
         start: datetime,
         end: datetime
     ) -> bool:
+        """已有任务在运行时返回失败，否则在线程中启动历史数据下载。"""
         if self.thread:
             self.write_log(_("已有任务在运行中，请等待完成"))
             return False
@@ -464,27 +467,27 @@ class BacktesterEngine(BaseEngine):
         return True
 
     def get_all_trades(self) -> list:
-        """"""
+        """返回回测引擎的全部成交。"""
         trades: list = self.backtesting_engine.get_all_trades()
         return trades
 
     def get_all_orders(self) -> list:
-        """"""
+        """返回回测引擎的全部委托。"""
         orders: list = self.backtesting_engine.get_all_orders()
         return orders
 
     def get_all_daily_results(self) -> list:
-        """"""
+        """返回回测引擎的全部每日结果。"""
         results: list = self.backtesting_engine.get_all_daily_results()
         return results
 
     def get_history_data(self) -> list:
-        """"""
+        """返回回测使用的历史数据。"""
         history_data: list = self.backtesting_engine.history_data
         return history_data
 
     def get_strategy_class_file(self, class_name: str) -> str:
-        """"""
+        """返回策略类所在文件路径。"""
         strategy_class: type[CtaTemplate] = self.classes[class_name]
         file_path: str = getfile(strategy_class)
         return file_path
