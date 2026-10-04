@@ -4,9 +4,10 @@ import platform
 import csv
 import shutil
 import subprocess
-from datetime import datetime, timedelta
+from _csv import Writer
+from datetime import date as Date, datetime, timedelta
 from copy import copy
-from typing import Any, cast
+from typing import Any, TextIO, cast
 
 import numpy as np
 import pyqtgraph as pg
@@ -67,6 +68,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_names = self.backtester_engine.get_strategy_class_names()
         self.class_names.sort()
 
+        class_name: str
         for class_name in self.class_names:
             setting: dict = self.backtester_engine.get_default_setting(class_name)
             self.settings[class_name] = setting
@@ -83,6 +85,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.symbol_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit("IF88.CFFEX")
 
         self.interval_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        interval: Interval
         for interval in Interval:
             self.interval_combo.addItem(interval.value)
 
@@ -141,6 +144,7 @@ class BacktesterManager(QtWidgets.QWidget):
         reload_button: QtWidgets.QPushButton = QtWidgets.QPushButton(_("策略重载"))
         reload_button.clicked.connect(self.reload_strategy_class)
 
+        button: QtWidgets.QPushButton
         for button in [
             backtesting_button,
             optimization_button,
@@ -281,7 +285,7 @@ class BacktesterManager(QtWidgets.QWidget):
 
     def process_log_event(self, event: Event) -> None:
         """把日志事件写入日志框。"""
-        msg = event.data
+        msg: str = event.data
         self.write_log(msg)
 
     def write_log(self, msg: str) -> None:
@@ -336,6 +340,7 @@ class BacktesterManager(QtWidgets.QWidget):
             self.write_log(_("本地代码缺失交易所后缀，请检查"))
             return
 
+        exchange_str: str
         __, exchange_str = vt_symbol.split(".")
         if exchange_str not in Exchange.__members__:
             self.write_log(_("本地代码的交易所后缀不正确，请检查"))
@@ -412,6 +417,9 @@ class BacktesterManager(QtWidgets.QWidget):
         if i != dialog.DialogCode.Accepted:
             return
 
+        optimization_setting: OptimizationSetting
+        use_ga: bool
+        max_workers: int
         optimization_setting, use_ga, max_workers = dialog.get_setting()
         self.target_display = dialog.target_display
 
@@ -529,6 +537,7 @@ class BacktesterManager(QtWidgets.QWidget):
 
         # 查找可用的编辑器
         editor_cmd: str = ""
+        cmd: str
         for cmd in editor_cmds:
             if shutil.which(cmd):
                 editor_cmd = cmd
@@ -622,6 +631,8 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         )
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
 
+        row: int
+        key: str
         for row, key in enumerate(self.KEY_NAME_MAP.keys()):
             cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             self.setItem(row, 0, cell)
@@ -629,6 +640,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
 
     def clear_data(self) -> None:
         """清空统计表单元格文本。"""
+        cell: QtWidgets.QTableWidgetItem
         for cell in self.cells.values():
             cell.setText("")
 
@@ -655,8 +667,10 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["ewm_sharpe"] = f"{data['ewm_sharpe']:,.2f}"
         data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
 
+        key: str
+        cell: QtWidgets.QTableWidgetItem
         for key, cell in self.cells.items():
-            value = data.get(key, "")
+            value: object = data.get(key, "")
             cell.setText(str(value))
 
 
@@ -686,8 +700,10 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         button_text: str = _("确定")
         parameters: dict = self.parameters
 
+        name: str
+        value: bool | int | float | str
         for name, value in parameters.items():
-            type_ = type(value)
+            type_: type[bool] | type[int] | type[float] | type[str] = type(value)
 
             edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(value))
             if type_ is int:
@@ -720,13 +736,17 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         """从输入框读取策略参数；布尔值只把文本True视为真。"""
         setting: dict = {}
 
+        name: str
+        tp: tuple[QtWidgets.QLineEdit, type]
         for name, tp in self.edits.items():
+            edit: QtWidgets.QLineEdit
+            type_: type
             edit, type_ = tp
-            value_text = edit.text()
+            value_text: str = edit.text()
 
             if type_ is bool:
                 if value_text == "True":
-                    value = True
+                    value: bool | int | float | str = True
                 else:
                     value = False
             else:
@@ -753,49 +773,49 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         pg.setConfigOptions(antialias=True)
 
         # Create plot widgets
-        self.balance_plot = self.addPlot(
+        self.balance_plot: pg.PlotItem = self.addPlot(
             title=_("账户净值"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.drawdown_plot = self.addPlot(
+        self.drawdown_plot: pg.PlotItem = self.addPlot(
             title=_("净值回撤"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.pnl_plot = self.addPlot(
+        self.pnl_plot: pg.PlotItem = self.addPlot(
             title=_("每日盈亏"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.distribution_plot = self.addPlot(title=_("盈亏分布"))
+        self.distribution_plot: pg.PlotItem = self.addPlot(title=_("盈亏分布"))
 
         # Add curves and bars on plot widgets
-        self.balance_curve = self.balance_plot.plot(
+        self.balance_curve: pg.PlotDataItem = self.balance_plot.plot(
             pen=pg.mkPen("#ffc107", width=3)
         )
 
         dd_color: str = "#303f9f"
-        self.drawdown_curve = self.drawdown_plot.plot(
+        self.drawdown_curve: pg.PlotDataItem = self.drawdown_plot.plot(
             fillLevel=-0.3, brush=dd_color, pen=dd_color
         )
 
         profit_color: str = 'r'
         loss_color: str = 'g'
-        self.profit_pnl_bar = pg.BarGraphItem(
+        self.profit_pnl_bar: pg.BarGraphItem = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=profit_color, pen=profit_color
         )
-        self.loss_pnl_bar = pg.BarGraphItem(
+        self.loss_pnl_bar: pg.BarGraphItem = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=loss_color, pen=loss_color
         )
         self.pnl_plot.addItem(self.profit_pnl_bar)
         self.pnl_plot.addItem(self.loss_pnl_bar)
 
         distribution_color: str = "#6d4c41"
-        self.distribution_curve = self.distribution_plot.plot(
+        self.distribution_curve: pg.PlotDataItem = self.distribution_plot.plot(
             fillLevel=-0.3, brush=distribution_color, pen=distribution_color
         )
 
@@ -815,6 +835,8 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         count: int = len(df)
 
         self.dates.clear()
+        n: int
+        date: Date
         for n, date in enumerate(df.index):
             self.dates[n] = date
 
@@ -828,6 +850,7 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         loss_pnl_x: list = []
         loss_pnl_height: list = []
 
+        pnl: float
         for count, pnl in enumerate(df["net_pnl"]):
             if pnl >= 0:
                 profit_pnl_height.append(pnl)
@@ -840,6 +863,8 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         self.loss_pnl_bar.setOpts(x=loss_pnl_x, height=loss_pnl_height)
 
         # Set data for pnl distribution
+        hist: np.ndarray
+        x: np.ndarray
         hist, x = np.histogram(df["net_pnl"], bins="auto")
         x = x[:-1]
         self.distribution_curve.setData(x, hist)
@@ -856,8 +881,9 @@ class DateAxis(pg.AxisItem):
     def tickStrings(self, values: list, scale: float, spacing: float) -> list:
         """按刻度索引取出日期并转成字符串。"""
         strings: list = []
+        v: float
         for v in values:
-            dt = self.dates.get(v, "")
+            dt: Date | str = self.dates.get(v, "")
             strings.append(str(dt))
         return strings
 
@@ -915,8 +941,10 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         validator: QtGui.QDoubleValidator = QtGui.QDoubleValidator()
         row: int = 3
 
+        name: str
+        value: bool | int | float | str
         for name, value in self.parameters.items():
-            type_ = type(value)
+            type_: type[bool] | type[int] | type[float] | type[str] = type(value)
             if type_ not in [int, float]:
                 continue
 
@@ -924,6 +952,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
             step_edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(1))
             end_edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(value))
 
+            edit: QtWidgets.QLineEdit
             for edit in [start_edit, step_edit, end_edit]:
                 edit.setValidator(validator)
 
@@ -979,11 +1008,13 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         target_name: str = self.DISPLAY_NAME_MAP[self.target_display]
         self.optimization_setting.set_target(target_name)
 
+        name: str
+        d: dict
         for name, d in self.edits.items():
-            type_ = d["type"]
-            start_value = type_(d["start"].text())
-            step_value = type_(d["step"].text())
-            end_value = type_(d["end"].text())
+            type_: type[int] | type[float] = d["type"]
+            start_value: int | float = type_(d["start"].text())
+            step_value: int | float = type_(d["step"].text())
+            end_value: int | float = type_(d["end"].text())
 
             if start_value == end_value:
                 self.optimization_setting.add_parameter(name, start_value)
@@ -1039,7 +1070,11 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
             1, QtWidgets.QHeaderView.ResizeMode.Stretch
         )
 
+        n: int
+        tp: tuple[dict, float, dict]
         for n, tp in enumerate(self.result_values):
+            setting: dict
+            target_value: float
             setting, target_value, __ = tp
             setting_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(str(setting))
             target_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(f"{target_value:.2f}")
@@ -1068,18 +1103,24 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         """
         Save table data into a csv file
         """
+        path: str
+        __: object
         path, __ = QtWidgets.QFileDialog.getSaveFileName(
             self, _("保存数据"), "", "CSV(*.csv)")
 
         if not path:
             return
 
+        f: TextIO
         with open(path, "w") as f:
-            writer = csv.writer(f, lineterminator="\n")
+            writer: Writer = csv.writer(f, lineterminator="\n")
 
             writer.writerow([_("参数"), self.target_display])
 
+            tp: tuple[dict, float, dict]
             for tp in self.result_values:
+                setting: dict
+                target_value: float
                 setting, target_value, __ = tp
                 row_data: list = [str(setting), str(target_value)]
                 writer.writerow(row_data)
@@ -1200,6 +1241,7 @@ class BacktestingResultDialog(QtWidgets.QDialog):
         self.updated = True
 
         data.reverse()
+        obj: TradeData | OrderData | DailyResult
         for obj in data:
             self.table.insert_new_row(obj)
 
@@ -1220,9 +1262,9 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.dt_ix_map: dict = {}
         self.ix_bar_map: dict = {}
 
-        self.high_price = 0
-        self.low_price = 0
-        self.price_range = 0
+        self.high_price: float = 0
+        self.low_price: float = 0
+        self.price_range: float = 0
 
         self.items: list = []
 
@@ -1300,6 +1342,8 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.updated = True
         self.chart.update_history(history)
 
+        ix: int
+        bar: BarData
         for ix, bar in enumerate(history):
             self.ix_bar_map[ix] = bar
             self.dt_ix_map[bar.datetime] = ix
@@ -1323,11 +1367,12 @@ class CandleChartDialog(QtWidgets.QDialog):
 
         y_adjustment: float = self.price_range * 0.001
 
+        d: dict
         for d in trade_pairs:
-            open_ix = self.dt_ix_map[d["open_dt"]]
-            close_ix = self.dt_ix_map[d["close_dt"]]
-            open_price = d["open_price"]
-            close_price = d["close_price"]
+            open_ix: int = self.dt_ix_map[d["open_dt"]]
+            close_ix: int = self.dt_ix_map[d["close_dt"]]
+            open_price: float = d["open_price"]
+            close_price: float = d["close_price"]
 
             # Trade Line
             x: list = [open_ix, close_ix]
@@ -1391,7 +1436,7 @@ class CandleChartDialog(QtWidgets.QDialog):
             scatter_data.append(close_scatter)
 
             # Trade text
-            volume = d["volume"]
+            volume: float = d["volume"]
             text_color: QtGui.QColor = QtGui.QColor(scatter_color)
             open_text: pg.TextItem = pg.TextItem(f"[{volume}]", color=text_color, anchor=(0.5, 0.5))
             close_text: pg.TextItem = pg.TextItem(f"[{volume}]", color=text_color, anchor=(0.5, 0.5))
@@ -1414,6 +1459,7 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.updated = False
 
         candle_plot: pg.PlotItem = self.chart.get_plot("candle")
+        item: pg.PlotCurveItem | pg.TextItem | pg.ScatterPlotItem
         for item in self.items:
             candle_plot.removeItem(item)
         self.items.clear()
@@ -1434,6 +1480,7 @@ def generate_trade_pairs(trades: list) -> list:
     short_trades: list = []
     trade_pairs: list = []
 
+    trade: TradeData
     for trade in trades:
         trade = copy(trade)
 
@@ -1447,7 +1494,7 @@ def generate_trade_pairs(trades: list) -> list:
         while trade.volume and opposite_direction:
             open_trade: TradeData = opposite_direction[0]
 
-            close_volume = min(open_trade.volume, trade.volume)
+            close_volume: float = min(open_trade.volume, trade.volume)
             d: dict = {
                 "open_dt": open_trade.datetime,
                 "open_price": open_trade.price,

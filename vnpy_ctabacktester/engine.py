@@ -12,7 +12,7 @@ from pandas import DataFrame
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
-from vnpy.trader.constant import Interval
+from vnpy.trader.constant import Exchange, Interval
 from vnpy.trader.utility import extract_vt_symbol
 from vnpy.trader.object import HistoryRequest, TickData, BarData, ContractData
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
@@ -27,11 +27,11 @@ from vnpy_ctastrategy.backtesting import (
 )
 from .locale import _
 
-APP_NAME = "CtaBacktester"
+APP_NAME: str = "CtaBacktester"
 
-EVENT_BACKTESTER_LOG = "eBacktesterLog"
-EVENT_BACKTESTER_BACKTESTING_FINISHED = "eBacktesterBacktestingFinished"
-EVENT_BACKTESTER_OPTIMIZATION_FINISHED = "eBacktesterOptimizationFinished"
+EVENT_BACKTESTER_LOG: str = "eBacktesterLog"
+EVENT_BACKTESTER_BACKTESTING_FINISHED: str = "eBacktesterBacktestingFinished"
+EVENT_BACKTESTER_OPTIMIZATION_FINISHED: str = "eBacktesterOptimizationFinished"
 
 
 class BacktesterEngine(BaseEngine):
@@ -99,8 +99,10 @@ class BacktesterEngine(BaseEngine):
         """
         从指定目录加载策略类。
         """
+        suffix: str
         for suffix in ["py", "pyd", "so"]:
             pathname: str = str(path.joinpath(f"*.{suffix}"))
+            filepath: str
             for filepath in glob(pathname):
                 filename: str = Path(filepath).stem
                 name: str = f"{module_name}.{filename}"
@@ -116,8 +118,9 @@ class BacktesterEngine(BaseEngine):
             # 重载模块，确保如果策略文件中有任何修改，能够立即生效。
             importlib.reload(module)
 
+            name: str
             for name in dir(module):
-                value = getattr(module, name)
+                value: object = getattr(module, name)
                 if (
                     isinstance(value, type)
                     and issubclass(value, CtaTemplate)
@@ -394,6 +397,8 @@ class BacktesterEngine(BaseEngine):
         self.write_log(_("{}-{}开始下载历史数据").format(vt_symbol, interval))
 
         try:
+            symbol: str
+            exchange: Exchange
             symbol, exchange = extract_vt_symbol(vt_symbol)
         except ValueError:
             self.write_log(_("{}解析失败，请检查交易所后缀").format(vt_symbol))

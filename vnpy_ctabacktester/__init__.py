@@ -28,7 +28,7 @@ from vnpy.trader.app import BaseApp
 from .engine import BacktesterEngine, APP_NAME
 
 
-all = [
+all: list[str] = [
     "APP_NAME",
     "BacktesterEngine",
     "CtaBacktesterApp",
