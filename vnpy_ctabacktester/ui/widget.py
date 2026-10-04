@@ -58,6 +58,17 @@ class BacktesterManager(QtWidgets.QWidget):
         self.target_display: str = ""
 
         self.init_ui()
+        self.default_setting: dict = {
+            "vt_symbol": self.symbol_line.text(),
+            "interval": self.interval_combo.currentText(),
+            "start": self.start_date_edit.date().toString("yyyy-MM-dd"),
+            "end": self.end_date_edit.date().toString("yyyy-MM-dd"),
+            "rate": self.rate_line.text(),
+            "slippage": self.slippage_line.text(),
+            "size": self.size_line.text(),
+            "pricetick": self.pricetick_line.text(),
+            "capital": self.capital_line.text(),
+        }
         self.register_event()
         self.backtester_engine.init_engine()
         self.init_strategy_settings()
@@ -293,6 +304,11 @@ class BacktesterManager(QtWidgets.QWidget):
             start_dt: QtCore.QDate = QtCore.QDate.fromString(start_str, "yyyy-MM-dd")
             self.start_date_edit.setDate(start_dt)
 
+        end_str: str = setting.get("end", "")
+        if end_str:
+            end_dt: QtCore.QDate = QtCore.QDate.fromString(end_str, "yyyy-MM-dd")
+            self.end_date_edit.setDate(end_dt)
+
         if "rate" in setting:
             self.rate_line.setText(str(setting["rate"]))
         if "slippage" in setting:
@@ -305,17 +321,12 @@ class BacktesterManager(QtWidgets.QWidget):
             self.capital_line.setText(str(setting["capital"]))
 
     def on_strategy_changed(self, class_name: str) -> None:
-        """切换策略时自动恢复该策略的历史配置"""
+        """切换策略时恢复该策略配置；没有记录时回到界面初始值。"""
         if not class_name:
             return
 
         all_settings: dict = load_json(self.setting_filename)
-        if not all_settings:
-            return
-
-        setting: dict = all_settings.get(class_name, {})
-        if setting:
-            self._apply_strategy_setting(setting)
+        self._apply_strategy_setting(all_settings.get(class_name) or self.default_setting)
 
     def register_event(self) -> None:
         """监听回测日志、回测完成和优化完成事件。"""
@@ -610,11 +621,15 @@ class BacktesterManager(QtWidgets.QWidget):
 
         current_strategy_name: str = self.class_combo.currentText()
 
-        self.class_combo.clear()
-        self.init_strategy_settings()
+        self.class_combo.blockSignals(True)
+        try:
+            self.class_combo.clear()
+            self.init_strategy_settings()
 
-        ix: int = self.class_combo.findText(current_strategy_name)
-        self.class_combo.setCurrentIndex(ix)
+            ix: int = self.class_combo.findText(current_strategy_name)
+            self.class_combo.setCurrentIndex(ix)
+        finally:
+            self.class_combo.blockSignals(False)
 
     def show(self) -> None:
         """最大化显示窗口。"""
