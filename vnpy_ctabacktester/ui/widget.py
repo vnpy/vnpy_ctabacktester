@@ -1,10 +1,13 @@
+"""CTA回测界面。"""
+
 import platform
 import csv
 import shutil
 import subprocess
-from datetime import datetime, timedelta
+from _csv import Writer
+from datetime import date as Date, datetime, timedelta
 from copy import copy
-from typing import Any, cast
+from typing import Any, TextIO, cast
 
 import numpy as np
 import pyqtgraph as pg
@@ -33,7 +36,7 @@ from ..engine import (
 
 
 class BacktesterManager(QtWidgets.QWidget):
-    """"""
+    """CTA回测界面。"""
 
     setting_filename: str = "cta_backtester_setting.json"
 
@@ -42,7 +45,7 @@ class BacktesterManager(QtWidgets.QWidget):
     signal_optimization_finished: QtCore.Signal = QtCore.Signal(Event)
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
-        """"""
+        """绑定回测引擎，初始化界面、加载策略并恢复上次参数。"""
         super().__init__()
 
         self.main_engine: MainEngine = main_engine
@@ -64,10 +67,11 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_combo.currentTextChanged.connect(self.on_strategy_changed)
 
     def init_strategy_settings(self) -> None:
-        """"""
+        """读取策略类名和默认参数，并填入下拉框。"""
         self.class_names = self.backtester_engine.get_strategy_class_names()
         self.class_names.sort()
 
+        class_name: str
         for class_name in self.class_names:
             setting: dict = self.backtester_engine.get_default_setting(class_name)
             self.settings[class_name] = setting
@@ -75,7 +79,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_combo.addItems(self.class_names)
 
     def init_ui(self) -> None:
-        """"""
+        """创建回测参数、按钮、统计表、日志和图表。"""
         self.setWindowTitle(_("CTA回测"))
 
         # Setting Part
@@ -84,6 +88,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.symbol_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit("IF88.CFFEX")
 
         self.interval_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+        interval: Interval
         for interval in Interval:
             self.interval_combo.addItem(interval.value)
 
@@ -142,6 +147,7 @@ class BacktesterManager(QtWidgets.QWidget):
         reload_button: QtWidgets.QPushButton = QtWidgets.QPushButton(_("策略重载"))
         reload_button.clicked.connect(self.reload_strategy_class)
 
+        button: QtWidgets.QPushButton
         for button in [
             backtesting_button,
             optimization_button,
@@ -312,7 +318,7 @@ class BacktesterManager(QtWidgets.QWidget):
             self._apply_strategy_setting(setting)
 
     def register_event(self) -> None:
-        """"""
+        """监听回测日志、回测完成和优化完成事件。"""
         self.signal_log.connect(self.process_log_event)
         self.signal_backtesting_finished.connect(
             self.process_backtesting_finished_event)
@@ -324,18 +330,18 @@ class BacktesterManager(QtWidgets.QWidget):
         self.event_engine.register(EVENT_BACKTESTER_OPTIMIZATION_FINISHED, self.signal_optimization_finished.emit)
 
     def process_log_event(self, event: Event) -> None:
-        """"""
-        msg = event.data
+        """把日志事件写入日志框。"""
+        msg: str = event.data
         self.write_log(msg)
 
     def write_log(self, msg: str) -> None:
-        """"""
+        """给消息加上时间并追加到日志框。"""
         timestamp: str = datetime.now().strftime("%H:%M:%S")
         msg = f"{timestamp}\t{msg}"
         self.log_monitor.append(msg)
 
     def process_backtesting_finished_event(self, event: Event) -> None:
-        """"""
+        """填入统计和图表，并启用成交、委托和每日结果按钮；非Tick周期再启用K线按钮。"""
         statistics: dict | None = self.backtester_engine.get_result_statistics()
         if statistics:
             self.statistics_monitor.set_data(statistics)
@@ -354,12 +360,12 @@ class BacktesterManager(QtWidgets.QWidget):
             self.candle_button.setEnabled(True)
 
     def process_optimization_finished_event(self, event: Event) -> None:
-        """"""
+        """记录提示并启用优化结果按钮。"""
         self.write_log(_("请点击[优化结果]按钮查看"))
         self.result_button.setEnabled(True)
 
     def start_backtesting(self) -> None:
-        """"""
+        """本地代码交易所后缀不合法或未确认参数时直接返回，否则保存参数并启动回测，成功后清空上次结果。"""
         class_name: str = self.class_combo.currentText()
         if not class_name:
             self.write_log(_("请选择要回测的策略"))
@@ -380,6 +386,7 @@ class BacktesterManager(QtWidgets.QWidget):
             self.write_log(_("本地代码缺失交易所后缀，请检查"))
             return
 
+        exchange_str: str
         __, exchange_str = vt_symbol.split(".")
         if exchange_str not in Exchange.__members__:
             self.write_log(_("本地代码的交易所后缀不正确，请检查"))
@@ -440,7 +447,7 @@ class BacktesterManager(QtWidgets.QWidget):
             self.candle_dialog.clear_data()
 
     def start_optimization(self) -> None:
-        """"""
+        """未确认优化参数时直接返回，否则启动优化并禁用结果按钮。"""
         class_name: str = self.class_combo.currentText()
         vt_symbol: str = self.symbol_line.text()
         interval: str = self.interval_combo.currentText()
@@ -458,6 +465,9 @@ class BacktesterManager(QtWidgets.QWidget):
         if i != dialog.DialogCode.Accepted:
             return
 
+        optimization_setting: OptimizationSetting
+        use_ga: bool
+        max_workers: int
         optimization_setting, use_ga, max_workers = dialog.get_setting()
         self.target_display = dialog.target_display
 
@@ -480,7 +490,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.result_button.setEnabled(False)
 
     def start_downloading(self) -> None:
-        """"""
+        """按界面上的合约、周期和日期启动历史数据下载。"""
         vt_symbol: str = self.symbol_line.text()
         interval: str = self.interval_combo.currentText()
         start_date: QtCore.QDate = self.start_date_edit.date()
@@ -511,7 +521,7 @@ class BacktesterManager(QtWidgets.QWidget):
         )
 
     def show_optimization_result(self) -> None:
-        """"""
+        """没有优化结果时直接返回，否则弹出结果窗口。"""
         result_values: list | None = self.backtester_engine.get_result_values()
         if result_values is None:
             return
@@ -523,7 +533,7 @@ class BacktesterManager(QtWidgets.QWidget):
         dialog.exec_()
 
     def show_backtesting_trades(self) -> None:
-        """"""
+        """尚未更新时填入成交，然后显示成交窗口。"""
         if not self.trade_dialog.is_updated():
             trades: list[TradeData] = self.backtester_engine.get_all_trades()
             self.trade_dialog.update_data(trades)
@@ -531,7 +541,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.trade_dialog.exec_()
 
     def show_backtesting_orders(self) -> None:
-        """"""
+        """尚未更新时填入委托，然后显示委托窗口。"""
         if not self.order_dialog.is_updated():
             orders: list[OrderData] = self.backtester_engine.get_all_orders()
             self.order_dialog.update_data(orders)
@@ -539,7 +549,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.order_dialog.exec_()
 
     def show_daily_results(self) -> None:
-        """"""
+        """尚未更新时填入每日结果，然后显示每日结果窗口。"""
         if not self.daily_dialog.is_updated():
             results: list[DailyResult] = self.backtester_engine.get_all_daily_results()
             self.daily_dialog.update_data(results)
@@ -547,7 +557,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.daily_dialog.exec_()
 
     def show_candle_chart(self) -> None:
-        """"""
+        """尚未更新时填入历史K线和成交，然后显示K线窗口。"""
         if not self.candle_dialog.is_updated():
             history: list = self.backtester_engine.get_history_data()
             self.candle_dialog.update_history(history)
@@ -558,7 +568,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.candle_dialog.exec_()
 
     def edit_strategy_code(self) -> None:
-        """"""
+        """用PATH中的Cursor、VS Code或PyCharm打开策略源文件，都没有时弹出警告。"""
         class_name: str = self.class_combo.currentText()
         if not class_name:
             return
@@ -575,6 +585,7 @@ class BacktesterManager(QtWidgets.QWidget):
 
         # 查找可用的编辑器
         editor_cmd: str = ""
+        cmd: str
         for cmd in editor_cmds:
             if shutil.which(cmd):
                 editor_cmd = cmd
@@ -594,7 +605,7 @@ class BacktesterManager(QtWidgets.QWidget):
             )
 
     def reload_strategy_class(self) -> None:
-        """"""
+        """重载策略类并刷新下拉框，尽量保持当前选项。"""
         self.backtester_engine.reload_strategy_class()
 
         current_strategy_name: str = self.class_combo.currentText()
@@ -606,12 +617,12 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_combo.setCurrentIndex(ix)
 
     def show(self) -> None:
-        """"""
+        """最大化显示窗口。"""
         self.showMaximized()
 
 
 class StatisticsMonitor(QtWidgets.QTableWidget):
-    """"""
+    """回测统计指标表。"""
     KEY_NAME_MAP: dict = {
         "start_date": _("首个交易日"),
         "end_date": _("最后交易日"),
@@ -649,7 +660,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
     }
 
     def __init__(self) -> None:
-        """"""
+        """创建单元格并初始化表格。"""
         super().__init__()
 
         self.cells: dict = {}
@@ -657,7 +668,7 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """按指标名创建一列只读单元格。"""
         self.setRowCount(len(self.KEY_NAME_MAP))
         self.setVerticalHeaderLabels(list(self.KEY_NAME_MAP.values()))
 
@@ -668,18 +679,21 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         )
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
 
+        row: int
+        key: str
         for row, key in enumerate(self.KEY_NAME_MAP.keys()):
             cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             self.setItem(row, 0, cell)
             self.cells[key] = cell
 
     def clear_data(self) -> None:
-        """"""
+        """清空统计表单元格文本。"""
+        cell: QtWidgets.QTableWidgetItem
         for cell in self.cells.values():
             cell.setText("")
 
     def set_data(self, data: dict) -> None:
-        """"""
+        """把统计指标格式化后写入表格。"""
         data["capital"] = f"{data['capital']:,.2f}"
         data["end_balance"] = f"{data['end_balance']:,.2f}"
         data["total_return"] = f"{data['total_return']:,.2f}%"
@@ -701,8 +715,10 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["ewm_sharpe"] = f"{data['ewm_sharpe']:,.2f}"
         data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
 
+        key: str
+        cell: QtWidgets.QTableWidgetItem
         for key, cell in self.cells.items():
-            value = data.get(key, "")
+            value: object = data.get(key, "")
             cell.setText(str(value))
 
 
@@ -714,7 +730,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
     def __init__(
         self, class_name: str, parameters: dict
     ) -> None:
-        """"""
+        """保存策略参数并初始化界面。"""
         super().__init__()
 
         self.class_name: str = class_name
@@ -724,7 +740,7 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """按参数类型创建输入框。"""
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
 
         # Add vt_symbol and name edit if add new strategy
@@ -732,8 +748,10 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         button_text: str = _("确定")
         parameters: dict = self.parameters
 
+        name: str
+        value: bool | int | float | str
         for name, value in parameters.items():
-            type_ = type(value)
+            type_: type[bool] | type[int] | type[float] | type[str] = type(value)
 
             edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(value))
             if type_ is int:
@@ -763,16 +781,20 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
         self.setLayout(vbox)
 
     def get_setting(self) -> dict:
-        """"""
+        """从输入框读取策略参数；布尔值只把文本True视为真。"""
         setting: dict = {}
 
+        name: str
+        tp: tuple[QtWidgets.QLineEdit, type]
         for name, tp in self.edits.items():
+            edit: QtWidgets.QLineEdit
+            type_: type
             edit, type_ = tp
-            value_text = edit.text()
+            value_text: str = edit.text()
 
             if type_ is bool:
                 if value_text == "True":
-                    value = True
+                    value: bool | int | float | str = True
                 else:
                     value = False
             else:
@@ -784,10 +806,10 @@ class BacktestingSettingEditor(QtWidgets.QDialog):
 
 
 class BacktesterChart(pg.GraphicsLayoutWidget):
-    """"""
+    """回测净值、回撤和盈亏图表。"""
 
     def __init__(self) -> None:
-        """"""
+        """创建日期索引并初始化图表。"""
         super().__init__(title="Backtester Chart")
 
         self.dates: dict = {}
@@ -795,58 +817,58 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """创建净值、回撤、每日盈亏和盈亏分布图。"""
         pg.setConfigOptions(antialias=True)
 
         # Create plot widgets
-        self.balance_plot = self.addPlot(
+        self.balance_plot: pg.PlotItem = self.addPlot(
             title=_("账户净值"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.drawdown_plot = self.addPlot(
+        self.drawdown_plot: pg.PlotItem = self.addPlot(
             title=_("净值回撤"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.pnl_plot = self.addPlot(
+        self.pnl_plot: pg.PlotItem = self.addPlot(
             title=_("每日盈亏"),
             axisItems={"bottom": DateAxis(self.dates, orientation="bottom")}
         )
         self.nextRow()
 
-        self.distribution_plot = self.addPlot(title=_("盈亏分布"))
+        self.distribution_plot: pg.PlotItem = self.addPlot(title=_("盈亏分布"))
 
         # Add curves and bars on plot widgets
-        self.balance_curve = self.balance_plot.plot(
+        self.balance_curve: pg.PlotDataItem = self.balance_plot.plot(
             pen=pg.mkPen("#ffc107", width=3)
         )
 
         dd_color: str = "#303f9f"
-        self.drawdown_curve = self.drawdown_plot.plot(
+        self.drawdown_curve: pg.PlotDataItem = self.drawdown_plot.plot(
             fillLevel=-0.3, brush=dd_color, pen=dd_color
         )
 
         profit_color: str = 'r'
         loss_color: str = 'g'
-        self.profit_pnl_bar = pg.BarGraphItem(
+        self.profit_pnl_bar: pg.BarGraphItem = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=profit_color, pen=profit_color
         )
-        self.loss_pnl_bar = pg.BarGraphItem(
+        self.loss_pnl_bar: pg.BarGraphItem = pg.BarGraphItem(
             x=[], height=[], width=0.3, brush=loss_color, pen=loss_color
         )
         self.pnl_plot.addItem(self.profit_pnl_bar)
         self.pnl_plot.addItem(self.loss_pnl_bar)
 
         distribution_color: str = "#6d4c41"
-        self.distribution_curve = self.distribution_plot.plot(
+        self.distribution_curve: pg.PlotDataItem = self.distribution_plot.plot(
             fillLevel=-0.3, brush=distribution_color, pen=distribution_color
         )
 
     def clear_data(self) -> None:
-        """"""
+        """清空净值、回撤、每日盈亏和盈亏分布曲线。"""
         self.balance_curve.setData([], [])
         self.drawdown_curve.setData([], [])
         self.profit_pnl_bar.setOpts(x=[], height=[])
@@ -854,13 +876,15 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         self.distribution_curve.setData([], [])
 
     def set_data(self, df: DataFrame) -> None:
-        """"""
+        """用每日结果更新净值、回撤、盈亏柱和盈亏分布；传入None时直接返回。"""
         if df is None:
             return
 
         count: int = len(df)
 
         self.dates.clear()
+        n: int
+        date: Date
         for n, date in enumerate(df.index):
             self.dates[n] = date
 
@@ -874,6 +898,7 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         loss_pnl_x: list = []
         loss_pnl_height: list = []
 
+        pnl: float
         for count, pnl in enumerate(df["net_pnl"]):
             if pnl >= 0:
                 profit_pnl_height.append(pnl)
@@ -886,6 +911,8 @@ class BacktesterChart(pg.GraphicsLayoutWidget):
         self.loss_pnl_bar.setOpts(x=loss_pnl_x, height=loss_pnl_height)
 
         # Set data for pnl distribution
+        hist: np.ndarray
+        x: np.ndarray
         hist, x = np.histogram(df["net_pnl"], bins="auto")
         x = x[:-1]
         self.distribution_curve.setData(x, hist)
@@ -895,15 +922,16 @@ class DateAxis(pg.AxisItem):
     """Axis for showing date data"""
 
     def __init__(self, dates: dict, *args: Any, **kwargs: Any) -> None:
-        """"""
+        """保存日期索引。"""
         super().__init__(*args, **kwargs)
         self.dates: dict = dates
 
     def tickStrings(self, values: list, scale: float, spacing: float) -> list:
-        """"""
+        """按刻度索引取出日期并转成字符串。"""
         strings: list = []
+        v: float
         for v in values:
-            dt = self.dates.get(v, "")
+            dt: Date | str = self.dates.get(v, "")
             strings.append(str(dt))
         return strings
 
@@ -923,7 +951,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
     def __init__(
         self, class_name: str, parameters: dict
     ) -> None:
-        """"""
+        """保存策略参数并初始化优化界面。"""
         super().__init__()
 
         self.class_name: str = class_name
@@ -936,7 +964,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """创建优化目标、进程上限和参数区间输入。"""
         self.target_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
         self.target_combo.addItems(list(self.DISPLAY_NAME_MAP.keys()))
 
@@ -961,8 +989,10 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         validator: QtGui.QDoubleValidator = QtGui.QDoubleValidator()
         row: int = 3
 
+        name: str
+        value: bool | int | float | str
         for name, value in self.parameters.items():
-            type_ = type(value)
+            type_: type[bool] | type[int] | type[float] | type[str] = type(value)
             if type_ not in [int, float]:
                 continue
 
@@ -970,6 +1000,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
             step_edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(1))
             end_edit: QtWidgets.QLineEdit = QtWidgets.QLineEdit(str(value))
 
+            edit: QtWidgets.QLineEdit
             for edit in [start_edit, step_edit, end_edit]:
                 edit.setValidator(validator)
 
@@ -1008,28 +1039,30 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         self.setLayout(vbox)
 
     def generate_ga_setting(self) -> None:
-        """"""
+        """标记使用遗传算法并生成优化设置。"""
         self.use_ga = True
         self.generate_setting()
 
     def generate_parallel_setting(self) -> None:
-        """"""
+        """把优化标记为非遗传算法并生成参数设置。"""
         self.use_ga = False
         self.generate_setting()
 
     def generate_setting(self) -> None:
-        """"""
+        """读取目标和参数区间，生成优化设置后关闭对话框。"""
         self.optimization_setting = OptimizationSetting()
 
         self.target_display: str = self.target_combo.currentText()
         target_name: str = self.DISPLAY_NAME_MAP[self.target_display]
         self.optimization_setting.set_target(target_name)
 
+        name: str
+        d: dict
         for name, d in self.edits.items():
-            type_ = d["type"]
-            start_value = type_(d["start"].text())
-            step_value = type_(d["step"].text())
-            end_value = type_(d["end"].text())
+            type_: type[int] | type[float] = d["type"]
+            start_value: int | float = type_(d["start"].text())
+            step_value: int | float = type_(d["step"].text())
+            end_value: int | float = type_(d["end"].text())
 
             if start_value == end_value:
                 self.optimization_setting.add_parameter(name, start_value)
@@ -1044,7 +1077,7 @@ class OptimizationSettingEditor(QtWidgets.QDialog):
         self.accept()
 
     def get_setting(self) -> tuple[OptimizationSetting, bool, int]:
-        """"""
+        """返回优化设置、是否使用遗传算法和进程上限。"""
         return self.optimization_setting, self.use_ga, self.worker_spin.value()
 
 
@@ -1056,7 +1089,7 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
     def __init__(
         self, result_values: list, target_display: str
     ) -> None:
-        """"""
+        """保存优化结果并初始化界面。"""
         super().__init__()
 
         self.result_values: list = result_values
@@ -1065,7 +1098,7 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """创建优化结果表格和保存按钮。"""
         self.setWindowTitle(_("参数优化结果"))
         self.resize(1100, 500)
 
@@ -1085,7 +1118,11 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
             1, QtWidgets.QHeaderView.ResizeMode.Stretch
         )
 
+        n: int
+        tp: tuple[dict, float, dict]
         for n, tp in enumerate(self.result_values):
+            setting: dict
+            target_value: float
             setting, target_value, __ = tp
             setting_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(str(setting))
             target_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(f"{target_value:.2f}")
@@ -1114,18 +1151,24 @@ class OptimizationResultMonitor(QtWidgets.QDialog):
         """
         Save table data into a csv file
         """
+        path: str
+        __: object
         path, __ = QtWidgets.QFileDialog.getSaveFileName(
             self, _("保存数据"), "", "CSV(*.csv)")
 
         if not path:
             return
 
+        f: TextIO
         with open(path, "w") as f:
-            writer = csv.writer(f, lineterminator="\n")
+            writer: Writer = csv.writer(f, lineterminator="\n")
 
             writer.writerow([_("参数"), self.target_display])
 
+            tp: tuple[dict, float, dict]
             for tp in self.result_values:
+                setting: dict
+                target_value: float
                 setting, target_value, __ = tp
                 row_data: list = [str(setting), str(target_value)]
                 writer.writerow(row_data)
@@ -1177,7 +1220,7 @@ class FloatCell(BaseCell):
     """
 
     def __init__(self, content: Any, data: Any) -> None:
-        """"""
+        """把内容格式化为两位小数后创建单元格。"""
         content = f"{content:.2f}"
         super().__init__(content, data)
 
@@ -1203,7 +1246,7 @@ class DailyResultMonitor(BaseMonitor):
 
 
 class BacktestingResultDialog(QtWidgets.QDialog):
-    """"""
+    """回测结果表格对话框。"""
 
     def __init__(
         self,
@@ -1212,7 +1255,7 @@ class BacktestingResultDialog(QtWidgets.QDialog):
         title: str,
         table_class: type[BaseMonitor]
     ) -> None:
-        """"""
+        """保存表格类并初始化界面。"""
         super().__init__()
 
         self.main_engine: MainEngine = main_engine
@@ -1225,7 +1268,7 @@ class BacktestingResultDialog(QtWidgets.QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """创建结果表格。"""
         self.setWindowTitle(self.title)
         self.resize(1100, 600)
 
@@ -1237,28 +1280,29 @@ class BacktestingResultDialog(QtWidgets.QDialog):
         self.setLayout(vbox)
 
     def clear_data(self) -> None:
-        """"""
+        """清空表格并标记为未更新。"""
         self.updated = False
         self.table.setRowCount(0)
 
     def update_data(self, data: list) -> None:
-        """"""
+        """倒序插入结果行并标记为已更新。"""
         self.updated = True
 
         data.reverse()
+        obj: TradeData | OrderData | DailyResult
         for obj in data:
             self.table.insert_new_row(obj)
 
     def is_updated(self) -> bool:
-        """"""
+        """返回结果是否已经填入。"""
         return self.updated
 
 
 class CandleChartDialog(QtWidgets.QDialog):
-    """"""
+    """回测K线与成交标记对话框。"""
 
     def __init__(self) -> None:
-        """"""
+        """初始化K线索引和图表。"""
         super().__init__()
 
         self.updated: bool = False
@@ -1266,16 +1310,16 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.dt_ix_map: dict = {}
         self.ix_bar_map: dict = {}
 
-        self.high_price = 0
-        self.low_price = 0
-        self.price_range = 0
+        self.high_price: float = 0
+        self.low_price: float = 0
+        self.price_range: float = 0
 
         self.items: list = []
 
         self.init_ui()
 
     def init_ui(self) -> None:
-        """"""
+        """创建K线图、成交量图和成交标记说明。"""
         self.setWindowTitle(_("回测K线图表"))
         self.resize(1400, 800)
 
@@ -1342,10 +1386,12 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.setLayout(vbox)
 
     def update_history(self, history: list) -> None:
-        """"""
+        """更新历史K线并记录每根K线的索引和最高最低价。"""
         self.updated = True
         self.chart.update_history(history)
 
+        ix: int
+        bar: BarData
         for ix, bar in enumerate(history):
             self.ix_bar_map[ix] = bar
             self.dt_ix_map[bar.datetime] = ix
@@ -1360,7 +1406,7 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.price_range = self.high_price - self.low_price
 
     def update_trades(self, trades: list) -> None:
-        """"""
+        """把成交配对画成虚线和箭头标记。"""
         trade_pairs: list = generate_trade_pairs(trades)
 
         candle_plot: pg.PlotItem = self.chart.get_plot("candle")
@@ -1369,11 +1415,12 @@ class CandleChartDialog(QtWidgets.QDialog):
 
         y_adjustment: float = self.price_range * 0.001
 
+        d: dict
         for d in trade_pairs:
-            open_ix = self.dt_ix_map[d["open_dt"]]
-            close_ix = self.dt_ix_map[d["close_dt"]]
-            open_price = d["open_price"]
-            close_price = d["close_price"]
+            open_ix: int = self.dt_ix_map[d["open_dt"]]
+            close_ix: int = self.dt_ix_map[d["close_dt"]]
+            open_price: float = d["open_price"]
+            close_price: float = d["close_price"]
 
             # Trade Line
             x: list = [open_ix, close_ix]
@@ -1437,7 +1484,7 @@ class CandleChartDialog(QtWidgets.QDialog):
             scatter_data.append(close_scatter)
 
             # Trade text
-            volume = d["volume"]
+            volume: float = d["volume"]
             text_color: QtGui.QColor = QtGui.QColor(scatter_color)
             open_text: pg.TextItem = pg.TextItem(f"[{volume}]", color=text_color, anchor=(0.5, 0.5))
             close_text: pg.TextItem = pg.TextItem(f"[{volume}]", color=text_color, anchor=(0.5, 0.5))
@@ -1456,10 +1503,11 @@ class CandleChartDialog(QtWidgets.QDialog):
         candle_plot.addItem(trade_scatter)
 
     def clear_data(self) -> None:
-        """"""
+        """移除成交标记、清空K线并标记为未更新。"""
         self.updated = False
 
         candle_plot: pg.PlotItem = self.chart.get_plot("candle")
+        item: pg.PlotCurveItem | pg.TextItem | pg.ScatterPlotItem
         for item in self.items:
             candle_plot.removeItem(item)
         self.items.clear()
@@ -1470,16 +1518,17 @@ class CandleChartDialog(QtWidgets.QDialog):
         self.ix_bar_map.clear()
 
     def is_updated(self) -> bool:
-        """"""
+        """返回K线是否已经填入。"""
         return self.updated
 
 
 def generate_trade_pairs(trades: list) -> list:
-    """"""
+    """把成交按相反方向撮合成开平仓对。"""
     long_trades: list = []
     short_trades: list = []
     trade_pairs: list = []
 
+    trade: TradeData
     for trade in trades:
         trade = copy(trade)
 
@@ -1493,7 +1542,7 @@ def generate_trade_pairs(trades: list) -> list:
         while trade.volume and opposite_direction:
             open_trade: TradeData = opposite_direction[0]
 
-            close_volume = min(open_trade.volume, trade.volume)
+            close_volume: float = min(open_trade.volume, trade.volume)
             d: dict = {
                 "open_dt": open_trade.datetime,
                 "open_price": open_trade.price,
